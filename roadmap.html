@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wavely 개발 로드맵 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    background: #f0f7ff;
+    color: #1e293b;
+    padding: 40px 32px;
+    min-height: 100vh;
+  }
+  .container { max-width: 1060px; margin: 0 auto; }
+
+  /* ─── Header ─── */
+  .header { margin-bottom: 28px; }
+  .header-top { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .brand-name {
+    font-size: 24px; font-weight: 800; letter-spacing: -0.04em;
+    background: linear-gradient(110deg, #1e3a8a 20%, #3b82f6 60%, #0d9488);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-sub { font-size: 13px; color: #64748b; font-weight: 500; -webkit-text-fill-color: #64748b; }
+  .slogan { font-size: 12px; color: #94a3b8; margin-top: 2px; margin-bottom: 20px; font-style: italic; }
+  .header .meta { display: flex; gap: 24px; margin-top: 6px; flex-wrap: wrap; }
+  .meta-item { font-size: 12px; color: #94a3b8; }
+  .meta-item span { font-weight: 600; color: #475569; }
+
+  /* ─── Stat tiles ─── */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; }
+  .stat .value { font-size: 28px; font-weight: 700; color: #0f172a; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat .label { font-size: 11px; color: #94a3b8; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  /* ─── Now notice ─── */
+  .now-notice {
+    background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
+    padding: 10px 16px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; flex-shrink: 0;
+    animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .now-notice strong { font-size: 13px; color: #1e40af; }
+  .now-notice span { font-size: 12px; color: #3b82f6; }
+
+  /* ─── Foundation note ─── */
+  .foundation-note {
+    background: #f0f9ff; border: 1px solid #bae6fd;
+    border-left: 3px solid #0284c7;
+    border-radius: 0 8px 8px 0; padding: 12px 16px;
+    margin-bottom: 28px; font-size: 12px; color: #0369a1; line-height: 1.6;
+  }
+  .foundation-note strong { color: #0c4a6e; }
+
+  /* ─── Gantt card ─── */
+  .gantt-card {
+    background: white; border: 1px solid #e2e8f0; border-radius: 16px;
+    margin-bottom: 32px; overflow: hidden;
+  }
+  .month-row { display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid #f1f5f9; border-radius: 15px 15px 0 0; overflow: hidden; }
+  .blank-cell { background: #f8fafc; border-right: 1px solid #e2e8f0; }
+  .months-area { position: relative; height: 30px; background: #f8fafc; }
+  .month-tick {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: #94a3b8; font-weight: 500; user-select: none;
+  }
+
+  /* ─── Phase rows ─── */
+  .phase-row { display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid #f1f5f9; }
+  .phase-row:last-child { border-bottom: none; }
+  .phase-label-cell {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px 14px; border-right: 1px solid #e2e8f0;
+  }
+  .phase-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .phase-name-txt { font-size: 12px; font-weight: 600; color: #334155; }
+  .phase-sub-label { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+
+  /* ─── Timeline ─── */
+  .timeline-area { position: relative; height: 48px; overflow: visible; }
+  .grid-vline { position: absolute; top: 0; bottom: 0; width: 1px; background: #f1f5f9; pointer-events: none; }
+  .bar {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    height: 26px; border-radius: 6px;
+    display: flex; align-items: center; padding: 0 9px;
+    cursor: pointer; overflow: visible;
+    transition: filter .15s, transform .1s;
+  }
+  .bar:hover { filter: brightness(1.1); transform: translateY(-50%) scaleY(1.06); }
+  .bar-text { font-size: 10px; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #f43f5e; z-index: 50; }
+  .today-tag {
+    position: absolute; bottom: calc(100% + 2px); left: 50%;
+    transform: translateX(-50%);
+    background: #f43f5e; color: white;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 5px; border-radius: 3px; white-space: nowrap;
+  }
+
+  /* ─── Tooltip ─── */
+  #g-tip {
+    display: none; position: fixed; z-index: 9999;
+    background: #0f172a; color: #e2e8f0; border-radius: 8px;
+    padding: 10px 13px; min-width: 210px; max-width: 260px;
+    font-size: 11px; pointer-events: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,.28);
+  }
+  #g-tip .tip-title { font-weight: 700; font-size: 12px; color: white; margin-bottom: 3px; }
+  #g-tip .tip-date { color: #64748b; margin-bottom: 7px; }
+  #g-tip .tip-tasks { display: flex; flex-direction: column; gap: 3px; }
+  #g-tip .tip-task { color: #cbd5e1; }
+  #g-tip .tip-task::before { content: '·  '; }
+
+  /* ─── Legend ─── */
+  .gantt-legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    padding: 14px 18px; border-top: 1px solid #f1f5f9;
+    border-radius: 0 0 15px 15px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #64748b; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ─── Checklist ─── */
+  .section-title { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
+  .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .check-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; }
+  .check-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .check-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .check-title { font-size: 13px; font-weight: 600; color: #0f172a; }
+  .check-date { font-size: 11px; color: #94a3b8; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .check-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .check-list li { font-size: 12px; color: #475569; display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
+  .check-list li::before { content: '☐'; flex-shrink: 0; color: #cbd5e1; }
+
+  @media (max-width: 640px) {
+    body { padding: 24px 16px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .check-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <span class="brand-name">Wavely</span>
+      <span class="header-sub">개발 로드맵 2026</span>
+    </div>
+    <div class="slogan">"완벽한 하루 대신, 지속 가능한 파동."</div>
+    <div class="meta">
+      <div class="meta-item">시작일 <span>2026.07.08</span></div>
+      <div class="meta-item">완료 목표 <span>2026.10.05</span></div>
+      <div class="meta-item">총 기간 <span>90일 · 약 13주</span></div>
+      <div class="meta-item">AI 피드백 <span>Google Gemini API</span></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="value">7</div><div class="label">개발 단계</div></div>
+    <div class="stat"><div class="value">90일</div><div class="label">총 일정</div></div>
+    <div class="stat"><div class="value">2</div><div class="label">플랫폼 (Win/Mac)</div></div>
+    <div class="stat"><div class="value" id="dday">—</div><div class="label">완료까지</div></div>
+  </div>
+
+  <!-- Now notice -->
+  <div class="now-notice">
+    <div class="pulse"></div>
+    <div>
+      <strong>현재 진행중 — Phase 0: 환경 세팅&nbsp;</strong>
+      <span>· 07.08 ~ 07.10 · Rust 설치 및 프로젝트 초기화</span>
+    </div>
+  </div>
+
+  <!-- Note -->
+  <div class="foundation-note">
+    <strong>핵심 원칙:</strong> 기능 개발 전에 Phase 0–2 기반을 완전히 갖춘다.
+    디자인 토큰·컴포넌트·데이터 레이어가 확정된 뒤 화면을 만든다.
+    Wavely 브랜드 컬러와 파도형 UI는 Phase 1 디자인 시스템에서 확립하고, 이후 모든 컴포넌트는 그 토큰을 따른다.
+  </div>
+
+  <!-- Tooltip -->
+  <div id="g-tip"></div>
+
+  <!-- Gantt -->
+  <div class="gantt-card">
+    <div class="month-row">
+      <div class="blank-cell"></div>
+      <div class="months-area" id="months-area"></div>
+    </div>
+    <div id="gantt-body"></div>
+    <div class="gantt-legend" id="gantt-legend"></div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="section-title">단계별 체크리스트</div>
+  <div class="check-grid" id="check-grid"></div>
+
+</div>
+
+<script>
+  const CHART_START = new Date('2026-07-08T00:00:00');
+  const TOTAL_DAYS  = 90; // July 8 → Oct 5
+
+  const today = new Date('2026-07-08T00:00:00');
+  const TODAY_OFFSET = Math.round((today - CHART_START) / 86400000);
+
+  // D-day
+  const end = new Date('2026-10-05T00:00:00');
+  const rem = Math.round((end - today) / 86400000);
+  document.getElementById('dday').textContent = rem > 0 ? `D-${rem}` : rem === 0 ? 'D-Day' : `D+${-rem}`;
+
+  function doff(d) { return Math.round((new Date(d + 'T00:00:00') - CHART_START) / 86400000); }
+  function pct(d)  { return (d / TOTAL_DAYS * 100).toFixed(3) + '%'; }
+
+  const phases = [
+    {
+      name: '환경 세팅', sub: 'Foundation Setup', color: '#64748b',
+      start: '2026-07-08', end: '2026-07-10',
+      tasks: ['Rust (rustup) 설치','Tauri CLI v2 설치','GitHub 레포 wavely 생성','Vite + React + TypeScript + Tauri 초기화','ESLint / Prettier / TS strict 설정']
+    },
+    {
+      name: '디자인 시스템', sub: 'Design System & UI Foundation', color: '#7c3aed',
+      start: '2026-07-11', end: '2026-07-20',
+      tasks: ['Wavely 컬러 토큰 (CSS variables)','타이포그래피 & 간격 스케일 정의','Button / Card / Input / Badge 컴포넌트','React Router 라우팅 구조','다크 모드 완전 대응']
+    },
+    {
+      name: '데이터 레이어', sub: 'Backend & Data Layer', color: '#2563eb',
+      start: '2026-07-21', end: '2026-07-31',
+      tasks: ['Tauri Rust 커맨드 설계','SQLite 로컬 저장소 (tauri-plugin-sql)','로컬 인증 (PIN / 세션)','Google Gemini API 클라이언트 구성','에러 처리 & 재시도 로직']
+    },
+    {
+      name: '핵심 UI', sub: 'Core Features', color: '#0284c7',
+      start: '2026-08-01', end: '2026-08-17',
+      tasks: ['로그인 / 홈 화면','파도형 스플라인 차트 대시보드','일일 운동 기록 입력 폼 (Deep/Mini 모드)','기록 목록 / 상세 / 수정 / 삭제','설정 & 프로필 페이지']
+    },
+    {
+      name: '고급 기능', sub: 'Advanced Features', color: '#0891b2',
+      start: '2026-08-18', end: '2026-09-07',
+      tasks: ['인지 검사 3종 (숫자기억 · 스트룹 · 반응속도)','Gemini AI 피드백 패널','네이티브 알림 (일일 리마인더)','연구 데이터 CSV 내보내기','Fade UI (기록 누락일 안개 표현)']
+    },
+    {
+      name: 'Tauri 통합', sub: 'Tauri Integration', color: '#0d9488',
+      start: '2026-09-08', end: '2026-09-21',
+      tasks: ['시스템 트레이 & 글로벌 단축키','자동 업데이트 (tauri-updater)','앱 코드 사이닝 (Windows / macOS)','.msi / .dmg / .AppImage 빌드 파이프라인','GitHub Actions CI/CD 구성']
+    },
+    {
+      name: 'QA & 배포', sub: 'Quality Assurance & Release', color: '#059669',
+      start: '2026-09-22', end: '2026-10-05',
+      tasks: ['통합 테스트 & 회귀 테스트','성능 최적화 (번들 · 시작 속도)','접근성 검수 (WCAG 2.1 AA)','최종 빌드 & 릴리즈 노트 작성','배포 & 설치 가이드 🚀']
+    },
+  ];
+
+  // Month ticks (days from July 8)
+  const monthTicks = [
+    { label: '7월', day: 0 },
+    { label: '8월', day: 24 },   // Aug 1
+    { label: '9월', day: 55 },   // Sep 1
+    { label: '10월', day: 85 },  // Oct 1
+  ];
+
+  // ── Month header
+  const monthsArea = document.getElementById('months-area');
+  monthTicks.forEach(m => {
+    const el = document.createElement('span');
+    el.className = 'month-tick';
+    el.textContent = m.label;
+    el.style.left = pct(m.day);
+    monthsArea.appendChild(el);
+  });
+
+  // ── Phase rows
+  const ganttBody = document.getElementById('gantt-body');
+  const gridHtml = monthTicks.map(m => `<div class="grid-vline" style="left:${pct(m.day)}"></div>`).join('');
+
+  let todayHtml = '';
+  if (TODAY_OFFSET >= 0 && TODAY_OFFSET <= TOTAL_DAYS) {
+    todayHtml = `<div class="today-line" style="left:${pct(TODAY_OFFSET)}"><div class="today-tag">오늘</div></div>`;
+  }
+
+  phases.forEach(phase => {
+    const s = doff(phase.start);
+    const e = doff(phase.end) + 1;
+    const dur = e - s;
+    const weeks = Math.max(1, Math.round(dur / 7));
+    const dateLabel = phase.start.slice(5).replace('-', '/') + ' – ' + phase.end.slice(5).replace('-', '/');
+
+    const row = document.createElement('div');
+    row.className = 'phase-row';
+    row.innerHTML = `
+      <div class="phase-label-cell">
+        <div class="phase-dot" style="background:${phase.color}"></div>
+        <div>
+          <div class="phase-name-txt">${phase.name}</div>
+          <div class="phase-sub-label">${phase.sub}</div>
+        </div>
+      </div>
+      <div class="timeline-area">
+        ${gridHtml}
+        ${todayHtml}
+        <div class="bar"
+          style="left:${pct(s)};width:${pct(dur)};background:${phase.color}"
+          data-title="${phase.name}"
+          data-date="${dateLabel} · ${dur}일 · ${weeks}주"
+          data-tasks="${phase.tasks.join('||')}">
+          <span class="bar-text">${phase.name}</span>
+        </div>
+      </div>`;
+    ganttBody.appendChild(row);
+  });
+
+  // ── Legend
+  const legendEl = document.getElementById('gantt-legend');
+  phases.forEach(ph => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-swatch" style="background:${ph.color}"></span>${ph.name}`;
+    legendEl.appendChild(item);
+  });
+
+  // ── Tooltip
+  const gTip = document.getElementById('g-tip');
+  function positionTip(e) {
+    const TW = gTip.offsetWidth || 220, TH = gTip.offsetHeight || 120;
+    let x = e.clientX - TW / 2, y = e.clientY - TH - 14;
+    if (x < 8) x = 8;
+    if (x + TW > window.innerWidth - 8) x = window.innerWidth - TW - 8;
+    if (y < 8) y = e.clientY + 20;
+    gTip.style.left = x + 'px'; gTip.style.top = y + 'px';
+  }
+  document.querySelectorAll('.bar').forEach(bar => {
+    const title = bar.dataset.title, date = bar.dataset.date;
+    const tasks = bar.dataset.tasks.split('||');
+    bar.addEventListener('mouseenter', e => {
+      gTip.innerHTML = `
+        <div class="tip-title">${title}</div>
+        <div class="tip-date">${date}</div>
+        <div class="tip-tasks">${tasks.map(t => `<div class="tip-task">${t}</div>`).join('')}</div>`;
+      gTip.style.display = 'block';
+      positionTip(e);
+    });
+    bar.addEventListener('mousemove', positionTip);
+    bar.addEventListener('mouseleave', () => { gTip.style.display = 'none'; });
+  });
+
+  // ── Checklist
+  const checkGrid = document.getElementById('check-grid');
+  phases.forEach(ph => {
+    const card = document.createElement('div');
+    card.className = 'check-card';
+    card.innerHTML = `
+      <div class="check-header">
+        <div class="check-dot" style="background:${ph.color}"></div>
+        <span class="check-title">${ph.name}</span>
+        <span class="check-date">${ph.start.slice(5).replace('-','/')} – ${ph.end.slice(5).replace('-','/')}</span>
+      </div>
+      <ul class="check-list">${ph.tasks.map(t => `<li>${t}</li>`).join('')}</ul>`;
+    checkGrid.appendChild(card);
+  });
+</script>
+</body>
+</html>
