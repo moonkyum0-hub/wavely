@@ -1,10 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <title>Wavely</title>
+    <!-- 다크모드 FOUC 방지: React 마운트 전에 클래스 적용 -->
+    <script>
+      (function(){
+        try {
+          var t = localStorage.getItem('wavely-theme');
+          if (t === 'dark') document.documentElement.classList.add('dark');
+        } catch(e){}
+      })();
+    </script>
   </head>
 
   <body>

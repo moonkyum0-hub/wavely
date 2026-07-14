@@ -1,8 +1,10 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
 
 export default function Layout() {
+  const { pathname } = useLocation();
+
   return (
     <div className="flex min-h-screen bg-background font-sans">
       {/* Desktop sidebar */}
@@ -12,7 +14,9 @@ export default function Layout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-8 md:pb-8 min-w-0">
-        <Outlet />
+        <div key={pathname} className="page-enter">
+          <Outlet />
+        </div>
       </main>
 
       {/* Mobile bottom nav */}

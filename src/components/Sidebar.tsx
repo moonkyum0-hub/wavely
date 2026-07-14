@@ -1,25 +1,28 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings } from "lucide-react";
+import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Sun, Moon, Dumbbell } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/context/ThemeContext";
+import WavelyLogo from "./WavelyLogo";
 
 const nav = [
   { to: "/", label: "오늘의 흐름", icon: LayoutDashboard },
   { to: "/record", label: "건강 기록", icon: ClipboardList },
   { to: "/stats", label: "통계", icon: BarChart3 },
   { to: "/goals", label: "목표 설정", icon: Target },
+  { to: "/exercise", label: "운동 카탈로그", icon: Dumbbell },
   { to: "/settings", label: "설정", icon: Settings },
 ];
 
 export default function Sidebar() {
+  const { theme, toggle } = useTheme();
+
   return (
     <aside className="flex flex-col w-[200px] xl:w-[220px] min-h-screen bg-[#1e3a8a] shrink-0 sticky top-0 h-screen">
       {/* Logo */}
       <div className="px-5 pt-6 pb-6">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-white text-lg font-bold shrink-0">
-            〜
-          </div>
+          <WavelyLogo size={36} />
           <div>
             <div className="text-white font-bold text-[15px] leading-tight">Wavely</div>
             <div className="text-white/50 text-[11px]">건강의 흐름</div>
@@ -56,15 +59,25 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* User */}
+      {/* User + dark toggle */}
       <div className="px-4 pt-3 pb-5 border-t border-white/10 flex items-center gap-2.5">
         <Avatar className="w-8 h-8 shrink-0">
           <AvatarFallback className="bg-blue-500 text-white text-xs font-bold">지</AvatarFallback>
         </Avatar>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-white text-[13px] font-semibold leading-tight truncate">김지현</div>
           <div className="text-white/50 text-[11px] mt-0.5">14일 연속 기록 중 🔥</div>
         </div>
+        <button
+          onClick={toggle}
+          className="shrink-0 w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          title={theme === "dark" ? "라이트 모드" : "다크 모드"}
+        >
+          {theme === "dark"
+            ? <Sun className="w-3.5 h-3.5 text-yellow-300" />
+            : <Moon className="w-3.5 h-3.5 text-white/70" />
+          }
+        </button>
       </div>
     </aside>
   );

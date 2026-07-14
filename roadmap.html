@@ -21,8 +21,7 @@
   .brand-name {
     font-size: 24px; font-weight: 800; letter-spacing: -0.04em;
     background: linear-gradient(110deg, #1e3a8a 20%, #3b82f6 60%, #0d9488);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
   .header-sub { font-size: 13px; color: #64748b; font-weight: 500; -webkit-text-fill-color: #64748b; }
   .slogan { font-size: 12px; color: #94a3b8; margin-top: 2px; margin-bottom: 20px; font-style: italic; }
@@ -126,16 +125,52 @@
   .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
 
   /* ─── Checklist ─── */
-  .section-title { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
+  .section-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .section-title { font-size: 17px; font-weight: 700; color: #0f172a; }
+  .section-clear {
+    font-size: 11px; color: #94a3b8; cursor: pointer; margin-left: auto;
+    text-decoration: underline; text-underline-offset: 2px;
+    background: none; border: none; padding: 0;
+  }
+  .section-clear:hover { color: #f43f5e; }
   .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .check-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; }
+  .check-card {
+    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 14px 16px; transition: box-shadow .2s;
+  }
+  .check-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.06); }
   .check-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .check-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
   .check-title { font-size: 13px; font-weight: 600; color: #0f172a; }
   .check-date { font-size: 11px; color: #94a3b8; margin-left: auto; font-variant-numeric: tabular-nums; }
-  .check-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-  .check-list li { font-size: 12px; color: #475569; display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
-  .check-list li::before { content: '☐'; flex-shrink: 0; color: #cbd5e1; }
+  /* Progress bar inside card */
+  .check-progress-wrap { margin-bottom: 10px; }
+  .check-progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .check-progress-label { font-size: 10px; color: #94a3b8; }
+  .check-progress-count { font-size: 10px; font-weight: 600; color: #475569; font-variant-numeric: tabular-nums; }
+  .check-progress-track { height: 4px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; }
+  .check-progress-fill { height: 100%; border-radius: 9999px; transition: width .3s; }
+
+  /* Checklist items */
+  .check-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 5px 6px; border-radius: 6px;
+    cursor: pointer; user-select: none;
+    transition: background .15s;
+  }
+  .check-item:hover { background: #f8fafc; }
+  .check-item.done { opacity: .6; }
+  .check-box {
+    width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid #cbd5e1;
+    flex-shrink: 0; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, border-color .15s;
+    font-size: 10px; color: white; font-weight: 700;
+  }
+  .check-item.done .check-box { border-color: transparent; }
+  .check-text { font-size: 12px; color: #475569; line-height: 1.45; transition: color .15s; }
+  .check-item.done .check-text { text-decoration: line-through; color: #94a3b8; }
 
   @media (max-width: 640px) {
     body { padding: 24px 16px; }
@@ -153,19 +188,19 @@
       <span class="brand-name">Wavely</span>
       <span class="header-sub">개발 로드맵 2026</span>
     </div>
-    <div class="slogan">"완벽한 하루 대신, 지속 가능한 파동."</div>
+    <div class="slogan">"완벽한 하루 대신, 흘러가는 파도처럼."</div>
     <div class="meta">
       <div class="meta-item">시작일 <span>2026.07.08</span></div>
-      <div class="meta-item">완료 목표 <span>2026.10.05</span></div>
-      <div class="meta-item">총 기간 <span>90일 · 약 13주</span></div>
+      <div class="meta-item">완료 목표 <span>2026.12.19</span></div>
+      <div class="meta-item">총 기간 <span>164일 · 약 23주</span></div>
       <div class="meta-item">AI 피드백 <span>Google Gemini API</span></div>
     </div>
   </div>
 
   <!-- Stats -->
   <div class="stats">
-    <div class="stat"><div class="value">7</div><div class="label">개발 단계</div></div>
-    <div class="stat"><div class="value">90일</div><div class="label">총 일정</div></div>
+    <div class="stat"><div class="value">8</div><div class="label">개발 단계</div></div>
+    <div class="stat"><div class="value" id="stat-elapsed">—</div><div class="label">경과 일수</div></div>
     <div class="stat"><div class="value">2</div><div class="label">플랫폼 (Win/Mac)</div></div>
     <div class="stat"><div class="value" id="dday">—</div><div class="label">완료까지</div></div>
   </div>
@@ -173,9 +208,8 @@
   <!-- Now notice -->
   <div class="now-notice">
     <div class="pulse"></div>
-    <div>
-      <strong>현재 진행중 — Phase 0: 환경 세팅&nbsp;</strong>
-      <span>· 07.08 ~ 07.10 · Rust 설치 및 프로젝트 초기화</span>
+    <div id="now-text">
+      <strong>로딩 중…</strong>
     </div>
   </div>
 
@@ -183,7 +217,8 @@
   <div class="foundation-note">
     <strong>핵심 원칙:</strong> 기능 개발 전에 Phase 0–2 기반을 완전히 갖춘다.
     디자인 토큰·컴포넌트·데이터 레이어가 확정된 뒤 화면을 만든다.
-    Wavely 브랜드 컬러와 파도형 UI는 Phase 1 디자인 시스템에서 확립하고, 이후 모든 컴포넌트는 그 토큰을 따른다.
+    Gemini AI 피드백은 핵심 기록 기능이 실데이터로 안정화된 뒤(Phase 5)에 연동한다.
+    정식 출시(Windows + macOS)를 목표로 Phase 6에서 코드 사이닝·공증·CI/CD 파이프라인을 갖춘 뒤 Phase 7 QA를 거쳐 배포한다.
   </div>
 
   <!-- Tooltip -->
@@ -200,73 +235,104 @@
   </div>
 
   <!-- Checklist -->
-  <div class="section-title">단계별 체크리스트</div>
+  <div class="section-header">
+    <div class="section-title">단계별 체크리스트</div>
+    <button class="section-clear" onclick="clearAllChecks()">전체 초기화</button>
+  </div>
   <div class="check-grid" id="check-grid"></div>
 
 </div>
 
 <script>
   const CHART_START = new Date('2026-07-08T00:00:00');
-  const TOTAL_DAYS  = 90; // July 8 → Oct 5
+  const TOTAL_DAYS  = 164;
+  const CHART_END   = new Date('2026-12-19T00:00:00');
 
-  const today = new Date('2026-07-08T00:00:00');
+  // ── Always use actual today ──────────────────────────────────────────────
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const TODAY_OFFSET = Math.round((today - CHART_START) / 86400000);
 
+  // Elapsed days
+  const elapsed = Math.max(0, TODAY_OFFSET);
+  document.getElementById('stat-elapsed').textContent = elapsed + '일';
+
   // D-day
-  const end = new Date('2026-10-05T00:00:00');
-  const rem = Math.round((end - today) / 86400000);
+  const rem = Math.round((CHART_END - today) / 86400000);
   document.getElementById('dday').textContent = rem > 0 ? `D-${rem}` : rem === 0 ? 'D-Day' : `D+${-rem}`;
 
   function doff(d) { return Math.round((new Date(d + 'T00:00:00') - CHART_START) / 86400000); }
   function pct(d)  { return (d / TOTAL_DAYS * 100).toFixed(3) + '%'; }
+  function fmtDate(iso) { return iso.slice(5).replace('-', '/'); }
 
   const phases = [
     {
-      name: '환경 세팅', sub: 'Foundation Setup', color: '#64748b',
+      id: 'p0', name: '환경 세팅', sub: 'Foundation Setup', color: '#64748b',
       start: '2026-07-08', end: '2026-07-10',
       tasks: ['Rust (rustup) 설치','Tauri CLI v2 설치','GitHub 레포 wavely 생성','Vite + React + TypeScript + Tauri 초기화','ESLint / Prettier / TS strict 설정']
     },
     {
-      name: '디자인 시스템', sub: 'Design System & UI Foundation', color: '#7c3aed',
-      start: '2026-07-11', end: '2026-07-20',
-      tasks: ['Wavely 컬러 토큰 (CSS variables)','타이포그래피 & 간격 스케일 정의','Button / Card / Input / Badge 컴포넌트','React Router 라우팅 구조','다크 모드 완전 대응']
+      id: 'p1', name: '디자인 시스템', sub: 'Design System & UI Foundation', color: '#7c3aed',
+      start: '2026-07-11', end: '2026-07-22',
+      tasks: ['Wavely 컬러 토큰 + 타이포그래피/간격 스케일','다크모드 완전 대응 (5개 페이지 + shadcn)','shadcn 컴포넌트 스타일 확정','차트 다크 테마 (useChartTheme)','EmptyState 컴포넌트 + 전 페이지 적용','스켈레톤 로딩 + 페이지 트랜지션','Wavely 로고 (파동 애니메이션 3→2파, 그라디언트)','라이트모드 그림자/그라데이션','운동 카탈로그 페이지 (18종 GIF/PNG)','MobileNav 다크 + iOS safe-area 픽스']
     },
     {
-      name: '데이터 레이어', sub: 'Backend & Data Layer', color: '#2563eb',
-      start: '2026-07-21', end: '2026-07-31',
-      tasks: ['Tauri Rust 커맨드 설계','SQLite 로컬 저장소 (tauri-plugin-sql)','로컬 인증 (PIN / 세션)','Google Gemini API 클라이언트 구성','에러 처리 & 재시도 로직']
+      id: 'p2', name: '데이터 레이어', sub: 'Backend & Data Layer', color: '#2563eb',
+      start: '2026-07-23', end: '2026-08-10',
+      tasks: ['SQLite 스키마 & 마이그레이션 (health_records / goals / exercise_logs)','Tauri Rust 커맨드 설계 (CRUD invoke 핸들러)','전 페이지 실데이터 연결 — Dashboard·Goals·Statistics·Settings·ExerciseCatalog','로컬 인증 (PIN / 세션)','에러 처리 & 재시도 로직','데이터 내보내기·백업 (JSON/CSV) 기반 마련','DB 스키마 버전 관리 규칙 문서화']
     },
     {
-      name: '핵심 UI', sub: 'Core Features', color: '#0284c7',
-      start: '2026-08-01', end: '2026-08-17',
-      tasks: ['로그인 / 홈 화면','파도형 스플라인 차트 대시보드','일일 운동 기록 입력 폼 (Deep/Mini 모드)','기록 목록 / 상세 / 수정 / 삭제','설정 & 프로필 페이지']
+      id: 'p3', name: '핵심 UI 완성', sub: 'Core Features Polish', color: '#0284c7',
+      start: '2026-08-11', end: '2026-08-28',
+      tasks: ['파도형 스플라인 차트 — 실데이터 연동','일일 운동 기록 입력 폼 (Deep/Mini 모드)','기록 목록 / 상세 / 수정 / 삭제 플로우','폼 유효성 검증 & 에러 메시지','로딩/빈 상태 전 페이지 적용 마감','설정 & 프로필 페이지 실데이터 연동','미세 향상 시각화 — 전일 대비 델타 인디케이터 (작은 변화도 수치로 인정)','타겟 페르소나별 온보딩 — 학생/직장인/환자 목표 템플릿']
     },
     {
-      name: '고급 기능', sub: 'Advanced Features', color: '#0891b2',
-      start: '2026-08-18', end: '2026-09-07',
-      tasks: ['인지 검사 3종 (숫자기억 · 스트룹 · 반응속도)','Gemini AI 피드백 패널','네이티브 알림 (일일 리마인더)','연구 데이터 CSV 내보내기','Fade UI (기록 누락일 안개 표현)']
+      id: 'p4', name: '고급 기능', sub: 'Advanced Features', color: '#0891b2',
+      start: '2026-08-29', end: '2026-09-18',
+      tasks: ['인지 검사 3종 (숫자기억 · 스트룹 · 반응속도)','Fade UI (기록 누락일 안개 표현)','네이티브 알림 (일일 리마인더)','연구/개인 데이터 CSV 내보내기','운동·컨디션 ↔ 인지검사 결과 상관관계 분석 (공부·업무·운동수행능력 연계)','업그레이드 인증서 — 마일스톤 달성 시 시각적 인증/배지','복지 효과 시뮬레이터 — 지속 시 예상 컨디션·수행능력 변화 시뮬레이션']
     },
     {
-      name: 'Tauri 통합', sub: 'Tauri Integration', color: '#0d9488',
-      start: '2026-09-08', end: '2026-09-21',
-      tasks: ['시스템 트레이 & 글로벌 단축키','자동 업데이트 (tauri-updater)','앱 코드 사이닝 (Windows / macOS)','.msi / .dmg / .AppImage 빌드 파이프라인','GitHub Actions CI/CD 구성']
+      id: 'p5', name: 'Gemini AI 연동', sub: 'AI Feedback Integration', color: '#4f46e5',
+      start: '2026-09-19', end: '2026-10-06',
+      tasks: ['Google Gemini API 클라이언트 구성 & 키 보안 저장','전송 데이터 범위 설계 (개인정보 최소화)','주간 분석 리포트 생성 로직','AI 피드백 이중 구성 — ① 공감·격려 메시지 ② 실데이터 기반 상관관계 분석 조언 (현재 목업 → 실제)','API 실패/레이트리밋 대비 폴백 UX','개인화 목표 추천']
     },
     {
-      name: 'QA & 배포', sub: 'Quality Assurance & Release', color: '#059669',
-      start: '2026-09-22', end: '2026-10-05',
-      tasks: ['통합 테스트 & 회귀 테스트','성능 최적화 (번들 · 시작 속도)','접근성 검수 (WCAG 2.1 AA)','최종 빌드 & 릴리즈 노트 작성','배포 & 설치 가이드 🚀']
+      id: 'p6', name: 'Tauri 크로스플랫폼 & 릴리즈 엔지니어링', sub: 'Cross-Platform Integration & Release Engineering', color: '#0d9488',
+      start: '2026-10-07', end: '2026-11-15',
+      tasks: ['macOS 빌드 타겟 추가 & 플랫폼별 QA','시스템 트레이 & 글로벌 단축키','자동 업데이트 (tauri-updater, 서명된 업데이트)','Windows 코드 사이닝 (Authenticode)','macOS 공증 (Notarization) & Hardened Runtime','GitHub Actions CI — PR마다 lint/typecheck/rust check','GitHub Actions 릴리즈 파이프라인 (win .msi / mac .dmg 빌드)','시맨틱 버저닝 + CHANGELOG 자동화','개인정보처리방침 & 이용약관 (건강데이터 + AI 연동 + 연구/의료 목적 데이터 활용 고지)']
+    },
+    {
+      id: 'p7', name: 'QA & 정식 출시', sub: 'Quality Assurance & Public Release', color: '#059669',
+      start: '2026-11-16', end: '2026-12-19',
+      tasks: ['통합 테스트 & 회귀 테스트','성능 최적화 (번들 크기·시작 속도)','접근성 검수 (WCAG 2.1 AA)','소규모 베타 테스트 라운드','데이터 마이그레이션/백업 최종 검증','최종 빌드 & 릴리즈 노트 작성','배포 채널 등록 (GitHub Releases / winget / 설치 가이드)','출시 후 모니터링 계획 (에러 리포트 opt-in) 🚀']
     },
   ];
 
-  // Month ticks (days from July 8)
+  // ── Now notice: auto-detect current phase ───────────────────────────────
+  const nowText = document.getElementById('now-text');
+  const activePhase = phases.find(ph => {
+    const s = new Date(ph.start + 'T00:00:00');
+    const e = new Date(ph.end + 'T23:59:59');
+    return today >= s && today <= e;
+  });
+  if (activePhase) {
+    nowText.innerHTML = `<strong>현재 진행중 — ${activePhase.name}·</strong> <span>${fmtDate(activePhase.start)} ~ ${fmtDate(activePhase.end)} · ${activePhase.sub}</span>`;
+  } else if (today < new Date('2026-07-08T00:00:00')) {
+    nowText.innerHTML = `<strong>개발 시작 전</strong> <span>· 2026.07.08 시작 예정</span>`;
+  } else {
+    nowText.innerHTML = `<strong>모든 Phase 완료 🎉</strong> <span>· Wavely 출시 완료</span>`;
+  }
+
+  // ── Month ticks ──────────────────────────────────────────────────────────
   const monthTicks = [
     { label: '7월', day: 0 },
-    { label: '8월', day: 24 },   // Aug 1
-    { label: '9월', day: 55 },   // Sep 1
-    { label: '10월', day: 85 },  // Oct 1
+    { label: '8월', day: 24 },
+    { label: '9월', day: 55 },
+    { label: '10월', day: 85 },
+    { label: '11월', day: 116 },
+    { label: '12월', day: 146 },
   ];
 
-  // ── Month header
   const monthsArea = document.getElementById('months-area');
   monthTicks.forEach(m => {
     const el = document.createElement('span');
@@ -276,10 +342,9 @@
     monthsArea.appendChild(el);
   });
 
-  // ── Phase rows
+  // ── Gantt bars ───────────────────────────────────────────────────────────
   const ganttBody = document.getElementById('gantt-body');
   const gridHtml = monthTicks.map(m => `<div class="grid-vline" style="left:${pct(m.day)}"></div>`).join('');
-
   let todayHtml = '';
   if (TODAY_OFFSET >= 0 && TODAY_OFFSET <= TOTAL_DAYS) {
     todayHtml = `<div class="today-line" style="left:${pct(TODAY_OFFSET)}"><div class="today-tag">오늘</div></div>`;
@@ -290,8 +355,7 @@
     const e = doff(phase.end) + 1;
     const dur = e - s;
     const weeks = Math.max(1, Math.round(dur / 7));
-    const dateLabel = phase.start.slice(5).replace('-', '/') + ' – ' + phase.end.slice(5).replace('-', '/');
-
+    const dateLabel = fmtDate(phase.start) + ' – ' + fmtDate(phase.end);
     const row = document.createElement('div');
     row.className = 'phase-row';
     row.innerHTML = `
@@ -316,7 +380,7 @@
     ganttBody.appendChild(row);
   });
 
-  // ── Legend
+  // ── Legend ───────────────────────────────────────────────────────────────
   const legendEl = document.getElementById('gantt-legend');
   phases.forEach(ph => {
     const item = document.createElement('div');
@@ -325,7 +389,7 @@
     legendEl.appendChild(item);
   });
 
-  // ── Tooltip
+  // ── Tooltip ──────────────────────────────────────────────────────────────
   const gTip = document.getElementById('g-tip');
   function positionTip(e) {
     const TW = gTip.offsetWidth || 220, TH = gTip.offsetHeight || 120;
@@ -350,20 +414,90 @@
     bar.addEventListener('mouseleave', () => { gTip.style.display = 'none'; });
   });
 
-  // ── Checklist
-  const checkGrid = document.getElementById('check-grid');
-  phases.forEach(ph => {
-    const card = document.createElement('div');
-    card.className = 'check-card';
-    card.innerHTML = `
-      <div class="check-header">
-        <div class="check-dot" style="background:${ph.color}"></div>
-        <span class="check-title">${ph.name}</span>
-        <span class="check-date">${ph.start.slice(5).replace('-','/')} – ${ph.end.slice(5).replace('-','/')}</span>
-      </div>
-      <ul class="check-list">${ph.tasks.map(t => `<li>${t}</li>`).join('')}</ul>`;
-    checkGrid.appendChild(card);
-  });
+  // ── Checklist with localStorage ──────────────────────────────────────────
+  const STORAGE_KEY = 'wavely-roadmap-checks-v1';
+
+  function loadChecks() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveChecks(obj) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  function toggleCheck(phaseId, taskIdx) {
+    const checks = loadChecks();
+    const key = `${phaseId}-${taskIdx}`;
+    checks[key] = !checks[key];
+    saveChecks(checks);
+    renderChecklist();
+  }
+
+  function clearAllChecks() {
+    if (confirm('모든 체크를 초기화할까요?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      renderChecklist();
+    }
+  }
+
+  function renderChecklist() {
+    const checks = loadChecks();
+    const checkGrid = document.getElementById('check-grid');
+    checkGrid.innerHTML = '';
+
+    phases.forEach(ph => {
+      const total = ph.tasks.length;
+      const done = ph.tasks.filter((_, i) => checks[`${ph.id}-${i}`]).length;
+      const pctFill = total > 0 ? (done / total * 100).toFixed(1) : 0;
+
+      const card = document.createElement('div');
+      card.className = 'check-card';
+
+      const taskItems = ph.tasks.map((t, i) => {
+        const isDone = !!checks[`${ph.id}-${i}`];
+        return `<li class="check-item${isDone ? ' done' : ''}" onclick="toggleCheck('${ph.id}', ${i})">
+          <div class="check-box" style="${isDone ? `background:${ph.color};border-color:${ph.color}` : ''}">
+            ${isDone ? '✓' : ''}
+          </div>
+          <span class="check-text">${t}</span>
+        </li>`;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="check-header">
+          <div class="check-dot" style="background:${ph.color}"></div>
+          <span class="check-title">${ph.name}</span>
+          <span class="check-date">${fmtDate(ph.start)} – ${fmtDate(ph.end)}</span>
+        </div>
+        <div class="check-progress-wrap">
+          <div class="check-progress-row">
+            <span class="check-progress-label">진행률</span>
+            <span class="check-progress-count">${done} / ${total}</span>
+          </div>
+          <div class="check-progress-track">
+            <div class="check-progress-fill" style="width:${pctFill}%;background:${ph.color}"></div>
+          </div>
+        </div>
+        <ul class="check-list">${taskItems}</ul>`;
+      checkGrid.appendChild(card);
+    });
+  }
+
+  // ── Auto-complete Phase 0 & Phase 1 (already done) ─────────────────────
+  (function initCompletedPhases() {
+    const checks = loadChecks();
+    let changed = false;
+    ['p0', 'p1'].forEach(phaseId => {
+      const ph = phases.find(p => p.id === phaseId);
+      if (!ph) return;
+      ph.tasks.forEach((_, i) => {
+        const key = `${phaseId}-${i}`;
+        if (!checks[key]) { checks[key] = true; changed = true; }
+      });
+    });
+    if (changed) saveChecks(checks);
+  })();
+
+  renderChecklist();
 </script>
 </body>
 </html>
