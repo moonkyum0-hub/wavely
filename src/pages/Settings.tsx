@@ -1,34 +1,102 @@
+import { useState, useEffect } from "react";
 import { Sun, Moon, Bell, Database, Shield, ChevronRight } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { cn } from "@/lib/utils";
+import { getRecords } from "@/lib/healthService";
+import type { HealthRecord } from "@/lib/models";
 
-const menuSections = [
-  {
-    title: "알림",
-    items: [
-      { icon: Bell, label: "일일 리마인더", sub: "매일 오전 8시", action: "toggle" },
-      { icon: Bell, label: "목표 달성 알림", sub: "목표 완료 시 알림", action: "toggle" },
-    ],
-  },
-  {
-    title: "데이터",
-    items: [
-      { icon: Database, label: "데이터 내보내기", sub: "CSV 파일로 다운로드", action: "arrow" },
-      { icon: Database, label: "데이터 초기화", sub: "모든 기록을 삭제합니다", action: "arrow", danger: true },
-    ],
-  },
-  {
-    title: "앱 정보",
-    items: [
-      { icon: Shield, label: "개인정보 처리방침", sub: "", action: "arrow" },
-      { icon: Shield, label: "버전", sub: "0.1.0 (개발 중)", action: "none" },
-    ],
-  },
-];
+function toDateStr(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
+function toCsv(records: HealthRecord[]): string {
+  const header = ["date", "sleepHours", "exerciseMin", "waterMl", "condition", "waveScore", "note"];
+  const rows = records.map((r) => [
+    r.date, r.sleepHours ?? "", r.exerciseMin ?? "", r.waterMl ?? "", r.condition ?? "", r.waveScore ?? "",
+    (r.note ?? "").replace(/"/g, '""'),
+  ].map((v) => (typeof v === "string" && (v.includes(",") || v.includes("\n")) ? `"${v}"` : v)).join(","));
+  return [header.join(","), ...rows].join("\n");
+}
+
+function downloadCsv(csv: string, filename: string) {
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function Settings() {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
+  const [streakCount, setStreakCount] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const recs = await getRecords("2000-01-01", toDateStr(new Date()));
+        const byDate = new Set(recs.map((r) => r.date));
+        let count = 0;
+        const d = new Date();
+        if (!byDate.has(toDateStr(d))) d.setDate(d.getDate() - 1);
+        while (byDate.has(toDateStr(d))) {
+          count++;
+          d.setDate(d.getDate() - 1);
+        }
+        setStreakCount(count);
+      } catch {
+        // dev browser mode — no Tauri runtime
+      }
+    })();
+  }, []);
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const recs = await getRecords("2000-01-01", toDateStr(new Date()));
+      downloadCsv(toCsv(recs), `wavely-health-records-${toDateStr(new Date())}.csv`);
+    } catch {
+      // dev browser mode — no Tauri runtime
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  type MenuItem = {
+    icon: typeof Bell;
+    label: string;
+    sub: string;
+    action: "toggle" | "arrow" | "none";
+    danger?: boolean;
+    onClick?: () => void;
+  };
+
+  const menuSections: { title: string; items: MenuItem[] }[] = [
+    {
+      title: "알림",
+      items: [
+        { icon: Bell, label: "일일 리마인더", sub: "매일 오전 8시", action: "toggle" },
+        { icon: Bell, label: "목표 달성 알림", sub: "목표 완료 시 알림", action: "toggle" },
+      ],
+    },
+    {
+      title: "데이터",
+      items: [
+        { icon: Database, label: isExporting ? "내보내는 중..." : "데이터 내보내기", sub: "CSV 파일로 다운로드", action: "arrow", onClick: handleExport },
+        { icon: Database, label: "데이터 초기화", sub: "모든 기록을 삭제합니다", action: "arrow", danger: true },
+      ],
+    },
+    {
+      title: "앱 정보",
+      items: [
+        { icon: Shield, label: "개인정보 처리방침", sub: "", action: "arrow" },
+        { icon: Shield, label: "버전", sub: "0.1.0 (개발 중)", action: "none" },
+      ],
+    },
+  ];
 
   return (
     <div className="space-y-section max-w-2xl">
@@ -44,7 +112,9 @@ export default function Settings() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-white font-bold text-base">김지현</div>
-          <div className="text-white/60 text-xs mt-0.5">14일 연속 기록 중 🔥 · Wavely 사용자</div>
+          <div className="text-white/60 text-xs mt-0.5">
+            {streakCount != null ? `${streakCount}일 연속 기록 중 🔥` : "기록을 시작해보세요"} · Wavely 사용자
+          </div>
         </div>
         <button className="shrink-0 bg-white/15 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
           편집
@@ -124,6 +194,7 @@ export default function Settings() {
             {section.items.map((item, i) => (
               <div
                 key={i}
+                onClick={item.onClick}
                 className={cn(
                   "flex items-center gap-3 px-card py-item",
                   item.action !== "none" && "cursor-pointer hover:bg-muted/30 transition-colors"

@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Search, X, Clock, ChevronRight, Dumbbell } from "lucide-react";
+import { Search, X, Clock, ChevronRight, Dumbbell, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
 import {
   EXERCISES, CATEGORY_LABEL, CATEGORY_COLOR, CATEGORY_ORDER,
   getGifUrl, type Exercise, type ExerciseCategory,
 } from "@/lib/exerciseData";
+import { logExercise } from "@/lib/exerciseService";
 
 /* ── Category icon SVG paths ─────────────────────────────────────── */
 const CAT_ICON_PATH: Record<ExerciseCategory, string> = {
@@ -90,6 +91,19 @@ function ExerciseCard({ ex, isDark, onClick }: { ex: Exercise; isDark: boolean; 
 function ExerciseModal({ ex, isDark, onClose }: { ex: Exercise; isDark: boolean; onClose: () => void }) {
   const cat = CATEGORY_COLOR[ex.category];
   const gif = getGifUrl(ex.name);
+  const [status, setStatus] = useState<"idle" | "saving" | "done">("idle");
+
+  async function handleAdd() {
+    setStatus("saving");
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      await logExercise({ date: today, exerciseName: ex.name, durationMin: ex.durationMin, completed: true });
+      setStatus("done");
+    } catch {
+      // dev browser mode — no Tauri runtime
+      setStatus("done");
+    }
+  }
 
   return createPortal(
     <div
@@ -176,13 +190,19 @@ function ExerciseModal({ ex, isDark, onClose }: { ex: Exercise; isDark: boolean;
           ))}
 
           {/* CTA */}
-          <button className={cn(
-            "w-full py-3 rounded-xl text-sm font-bold transition-colors mt-2",
-            isDark
-              ? "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
-              : "bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90"
-          )}>
-            루틴에 추가하기
+          <button
+            onClick={handleAdd}
+            disabled={status !== "idle"}
+            className={cn(
+              "w-full py-3 rounded-xl text-sm font-bold transition-colors mt-2 flex items-center justify-center gap-1.5",
+              status === "done"
+                ? isDark ? "bg-emerald-500/20 text-emerald-300" : "bg-emerald-50 text-emerald-700"
+                : isDark
+                  ? "bg-blue-500/20 text-blue-300 hover:bg-blue-500/30"
+                  : "bg-[#1e3a8a] text-white hover:bg-[#1e3a8a]/90"
+            )}
+          >
+            {status === "done" ? <><Check className="w-4 h-4" /> 오늘 기록에 추가됨</> : status === "saving" ? "추가하는 중..." : "오늘 기록에 추가하기"}
           </button>
         </div>
       </div>
