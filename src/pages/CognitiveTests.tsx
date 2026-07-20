@@ -87,31 +87,38 @@ function ReactionTest({ onDone }: { onDone: (avgMs: number) => void }) {
 }
 
 /* ── 숫자기억 ─────────────────────────────────────────────── */
+function genSequence(length: number): number[] {
+  return Array.from({ length }, () => Math.floor(Math.random() * 10));
+}
+
 function DigitSpanTest({ onDone }: { onDone: (maxSpan: number) => void }) {
   const MAX_SPAN = 9;
   const [span, setSpan] = useState(3);
   const [phase, setPhase] = useState<"showing" | "input">("showing");
-  const [sequence, setSequence] = useState<number[]>([]);
+  const [sequence, setSequence] = useState<number[]>(() => genSequence(3));
   const [displayIndex, setDisplayIndex] = useState(0);
   const [input, setInput] = useState("");
   const lastCorrectRef = useRef(0);
 
+  // 숫자를 800ms 간격으로 하나씩 보여주고, 마지막 숫자 뒤엔 입력 단계로 전환.
+  // 상태 전환은 전부 setTimeout 콜백(비동기) 안에서만 일어난다.
   useEffect(() => {
-    setSequence(Array.from({ length: span }, () => Math.floor(Math.random() * 10)));
+    if (phase !== "showing") return;
+    const t = setTimeout(() => {
+      const next = displayIndex + 1;
+      if (next >= sequence.length) setPhase("input");
+      else setDisplayIndex(next);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [phase, displayIndex, sequence]);
+
+  function advanceTo(nextSpan: number) {
+    setSpan(nextSpan);
+    setSequence(genSequence(nextSpan));
     setDisplayIndex(0);
     setPhase("showing");
     setInput("");
-  }, [span]);
-
-  useEffect(() => {
-    if (phase !== "showing") return;
-    if (displayIndex >= sequence.length) {
-      setPhase("input");
-      return;
-    }
-    const t = setTimeout(() => setDisplayIndex((i) => i + 1), 800);
-    return () => clearTimeout(t);
-  }, [phase, displayIndex, sequence]);
+  }
 
   function submit() {
     const correct = input.trim() === sequence.join("");
@@ -120,7 +127,7 @@ function DigitSpanTest({ onDone }: { onDone: (maxSpan: number) => void }) {
       if (span >= MAX_SPAN) {
         onDone(span);
       } else {
-        setSpan((s) => s + 1);
+        advanceTo(span + 1);
       }
     } else {
       onDone(lastCorrectRef.current);
@@ -178,13 +185,16 @@ function StroopTest({ onDone }: { onDone: (accuracy: number, avgRtMs: number) =>
   const [current, setCurrent] = useState(randomStroopTrial);
   const correctCountRef = useRef(0);
   const rtsRef = useRef<number[]>([]);
-  const startRef = useRef(performance.now());
+  // 렌더 중 impure 호출을 피하기 위해 0으로 초기화 — 실제 시작 시각은 아래 effect에서 기록.
+  const startRef = useRef(0);
 
   useEffect(() => {
     startRef.current = performance.now();
   }, [trialIndex]);
 
   function handleAnswer(colorId: string) {
+    // 클릭 이벤트 핸들러 — 렌더 중이 아니므로 impure 호출(시각 측정)이 허용된다.
+    // eslint-disable-next-line react-hooks/purity
     const rt = performance.now() - startRef.current;
     const correct = colorId === current.ink.id;
     if (correct) {
@@ -234,8 +244,10 @@ export default function CognitiveTests() {
   const [latest, setLatest] = useState<Partial<Record<CognitiveTestType, LatestResult>>>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // isLoading은 true로 시작하고 첫 로드가 끝나면 내려간다. 재로드(검사 완료 후)는
+  // 카드 내용만 조용히 갱신하므로 스피너를 다시 켜지 않는다 — effect 안에서
+  // 동기 setState를 피하는 구조이기도 하다.
   async function loadLatest() {
-    setIsLoading(true);
     try {
       const [r, d, s] = await Promise.all([
         getLatestCognitiveTest("reaction"),
@@ -254,6 +266,8 @@ export default function CognitiveTests() {
     }
   }
 
+  // loadLatest는 async — 모든 setState가 await 이후에 일어나므로 동기 setState 아님.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadLatest(); }, []);
 
   async function handleDone(testType: CognitiveTestType, metricValue: number, metricValue2?: number) {

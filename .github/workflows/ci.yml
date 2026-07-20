@@ -1,0 +1,39 @@
+# 모든 push·PR마다 타입 체크 + lint + 테스트를 자동 실행.
+# 로컬에서 npm run check를 깜빡해도 GitHub이 잡아준다.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run test
+
+  # Rust(Tauri 백엔드)는 마이그레이션 파일이 바뀔 때만 의미가 있어 별도 잡으로 분리.
+  # 캐시 덕에 두 번째 실행부터는 빠르다.
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install Tauri system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: cargo check --no-default-features
+        working-directory: src-tauri

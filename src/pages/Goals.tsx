@@ -65,6 +65,8 @@ export default function Goals() {
     }
   }, [todayStr]);
 
+  // load는 async — 모든 setState가 await 이후에 일어나므로 동기 setState 아님.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   async function seedDefaultGoals() {

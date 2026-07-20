@@ -7,7 +7,7 @@ import { useTheme } from "@/context/ThemeContext";
 import EmptyState from "@/components/EmptyState";
 import { LogItemSkeleton } from "@/components/Skeleton";
 import { upsertRecord, getRecord, getRecentRecords } from "@/lib/healthService";
-import { calcWaveScore, type HealthRecord } from "@/lib/models";
+import { calcWaveScore, type HealthRecord as HealthRecordModel } from "@/lib/models";
 
 const CONDITIONS = [
   { label: "힘들어요", emoji: "😞", value: 1,
@@ -31,7 +31,7 @@ function waveEmoji(score: number) {
   return "😞";
 }
 
-function scoreTags(r: HealthRecord) {
+function scoreTags(r: HealthRecordModel) {
   const tags: string[] = [];
   if (r.sleepHours)  tags.push(`수면 ${r.sleepHours}h`);
   if (r.exerciseMin) tags.push(`운동 ${r.exerciseMin}분`);
@@ -70,7 +70,7 @@ export default function HealthRecord() {
 
   const [isSaving,    setIsSaving]    = useState(false);
   const [savedScore,  setSavedScore]  = useState<number | null>(null);
-  const [recentLogs,  setRecentLogs]  = useState<HealthRecord[]>([]);
+  const [recentLogs,  setRecentLogs]  = useState<HealthRecordModel[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
 
   const loadRecent = useCallback(async () => {
@@ -99,6 +99,9 @@ export default function HealthRecord() {
         }
       } catch { /* browser dev */ }
     })();
+    // loadRecent is async — every setState in it happens after an awaited DB read,
+    // so the sync-setState-in-effect concern doesn't apply here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadRecent();
   }, [today, loadRecent]);
 
@@ -106,7 +109,7 @@ export default function HealthRecord() {
     if (hasErrors) return;
     setIsSaving(true);
     try {
-      const record: HealthRecord = {
+      const record: HealthRecordModel = {
         date:        today,
         condition,
         sleepHours:  sleep    ? parseFloat(sleep)    : undefined,

@@ -5,6 +5,6 @@ export function usePageLoading(delayMs = 1200) {
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), delayMs);
     return () => clearTimeout(t);
-  }, []);
+  }, [delayMs]);
   return isLoading;
 }

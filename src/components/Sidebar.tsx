@@ -57,7 +57,7 @@ export default function Sidebar() {
       {/* AI bubble */}
       <div className="px-3 pb-3">
         <div className="bg-white/10 rounded-xl p-3 text-[11px] text-white/65 leading-relaxed">
-          "어제보다 0.1% 나아졌다면,<br />오늘도 충분히 잘 한 거예요."
+          &ldquo;어제보다 0.1% 나아졌다면,<br />오늘도 충분히 잘 한 거예요.&rdquo;
         </div>
       </div>
 

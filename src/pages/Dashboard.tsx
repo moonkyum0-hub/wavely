@@ -106,28 +106,23 @@ export default function Dashboard() {
     },
   ];
 
-  const last7Dates = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return toDateStr(d);
-    }),
-    []
-  );
+  // 7개 항목의 단순 매핑이라 수동 메모이제이션 없이 매 렌더 계산 — React Compiler가 알아서 최적화한다.
+  const last7Dates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return toDateStr(d);
+  });
 
-  const chartData = useMemo(
-    () => last7Dates.map((date) => {
-      const r = byDate.get(date);
-      const d = new Date(date + "T00:00:00");
-      return {
-        day: WEEKDAY_KR[d.getDay()],
-        wave: r?.waveScore ?? null,
-        exercise: r?.exerciseMin ?? null,
-        condition: r?.condition != null ? r.condition * 20 : null,
-      };
-    }),
-    [last7Dates, byDate]
-  );
+  const chartData = last7Dates.map((date) => {
+    const r = byDate.get(date);
+    const d = new Date(date + "T00:00:00");
+    return {
+      day: WEEKDAY_KR[d.getDay()],
+      wave: r?.waveScore ?? null,
+      exercise: r?.exerciseMin ?? null,
+      condition: r?.condition != null ? r.condition * 20 : null,
+    };
+  });
 
   const hasWeekData = chartData.some((d) => d.wave != null);
 

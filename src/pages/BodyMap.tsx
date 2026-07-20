@@ -87,7 +87,10 @@ export default function BodyMap() {
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
   const [cognitiveTests, setCognitiveTests] = useState<CognitiveTest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // 로딩 여부를 별도 boolean으로 두지 않고 "어느 기간까지 로드됐나"에서 파생 —
+  // effect 안에서 동기 setState를 하지 않기 위한 패턴.
+  const [loadedPeriod, setLoadedPeriod] = useState<Period | null>(null);
+  const isLoading = loadedPeriod !== period;
 
   const nameToCategory = useMemo(() => {
     const map = new Map<string, ExerciseCategory>();
@@ -97,7 +100,6 @@ export default function BodyMap() {
 
   useEffect(() => {
     const { from, to } = periodRange(period);
-    setIsLoading(true);
     (async () => {
       try {
         const [recs, logs, tests] = await Promise.all([
@@ -109,7 +111,7 @@ export default function BodyMap() {
       } catch {
         // dev browser mode — no Tauri runtime
       } finally {
-        setIsLoading(false);
+        setLoadedPeriod(period);
       }
     })();
   }, [period]);

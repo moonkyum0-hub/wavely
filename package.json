@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts,.tsx",
+    "test": "vitest run",
+    "check": "tsc --noEmit && npm run lint && npm run test",
     "format": "prettier --write src",
     "tauri": "tauri"
   },
@@ -44,7 +46,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "prettier": "^3.9.4",
     "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "vitest": "^4.1.10"
   },
   "allowScripts": {
     "esbuild@0.28.1": true

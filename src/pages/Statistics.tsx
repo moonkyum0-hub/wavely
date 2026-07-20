@@ -23,6 +23,22 @@ function lastNDates(n: number, offsetDays = 0) {
   });
 }
 
+interface GradBarProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  index?: number;
+  isDark?: boolean;
+}
+
+// Recharts가 x/y/width/height/index를 주입하고, isDark만 우리가 넘긴다.
+function GradBar({ x, y, width, height, index = 0, isDark }: GradBarProps) {
+  const opacity = 0.3 + (index / 6) * 0.7;
+  const color = isDark ? `rgba(96,165,250,${opacity})` : `rgba(30,58,138,${opacity})`;
+  return <rect x={x} y={y} width={width} height={height} fill={color} rx={4} />;
+}
+
 export default function Statistics() {
   const [period, setPeriod] = useState<"week" | "month">("week");
   const ct = useChartTheme();
@@ -143,15 +159,6 @@ export default function Statistics() {
     insights.push({ icon: "🩷", text: `${days}일 중 ${currentRecs.length}일을 기록했어요. 꾸준함이 쌓이고 있어요.`, light: "bg-rose-50 border-rose-200", accentHex: "#f43f5e" });
   }
 
-  const GradBar = (props: any) => {
-    const { x, y, width, height, index } = props;
-    const opacity = 0.3 + (index / 6) * 0.7;
-    const color = ct.isDark
-      ? `rgba(96,165,250,${opacity})`
-      : `rgba(30,58,138,${opacity})`;
-    return <rect x={x} y={y} width={width} height={height} fill={color} rx={4} />;
-  };
-
   const hdrStrip = ct.isDark
     ? "bg-black/15"
     : "bg-gradient-to-r from-[#1e3a8a]/5 to-transparent";
@@ -226,7 +233,7 @@ export default function Statistics() {
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: ct.tick }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: ct.tick }} axisLine={false} tickLine={false} width={26} />
                 <Tooltip contentStyle={ct.tooltip} />
-                <Bar dataKey="v" shape={<GradBar />} />
+                <Bar dataKey="v" shape={<GradBar isDark={ct.isDark} />} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 type Theme = "light" | "dark";
 
@@ -9,7 +9,7 @@ interface ThemeCtx {
 
 const ThemeContext = createContext<ThemeCtx>({ theme: "light", toggle: () => {} });
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       return (localStorage.getItem("wavely-theme") as Theme) ?? "light";
