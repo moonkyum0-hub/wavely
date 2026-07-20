@@ -6,6 +6,7 @@ import EmptyState from "@/components/EmptyState";
 import { GoalCardSkeleton } from "@/components/Skeleton";
 import { getActiveGoals, createGoal, updateGoal } from "@/lib/goalService";
 import { getRecord } from "@/lib/healthService";
+import { DEFAULT_GOAL_TEMPLATE } from "@/lib/goalTemplates";
 import type { Goal, HealthRecord } from "@/lib/models";
 
 const GOAL_META: Record<Goal["type"], {
@@ -17,13 +18,6 @@ const GOAL_META: Record<Goal["type"], {
   wave:     { icon: "📈", color: "bg-blue-500",    textLight: "text-blue-600",    textDark: "text-blue-400",    trackLight: "bg-blue-100",    trackDark: "bg-blue-900/40" },
   custom:   { icon: "🎯", color: "bg-rose-500",    textLight: "text-rose-600",    textDark: "text-rose-400",    trackLight: "bg-rose-100",    trackDark: "bg-rose-900/40" },
 };
-
-const DEFAULT_GOALS: Omit<Goal, "id" | "createdAt">[] = [
-  { type: "sleep",    title: "수면 시간", targetValue: 8,  unit: "h",  period: "daily", isActive: true },
-  { type: "exercise", title: "운동 시간", targetValue: 30, unit: "분", period: "daily", isActive: true },
-  { type: "water",    title: "수분 섭취", targetValue: 2,  unit: "L",  period: "daily", isActive: true },
-  { type: "wave",     title: "파도 점수", targetValue: 80, unit: "점", period: "daily", isActive: true },
-];
 
 function currentValueFor(type: Goal["type"], today: HealthRecord | null): number {
   switch (type) {
@@ -75,7 +69,7 @@ export default function Goals() {
 
   async function seedDefaultGoals() {
     try {
-      for (const g of DEFAULT_GOALS) await createGoal(g);
+      for (const g of DEFAULT_GOAL_TEMPLATE) await createGoal(g);
       await load();
     } catch {
       // dev browser mode — no Tauri runtime

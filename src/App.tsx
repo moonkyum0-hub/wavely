@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
@@ -8,6 +8,7 @@ import Goals from "./pages/Goals";
 import Settings from "./pages/Settings";
 import ExerciseCatalog from "./pages/ExerciseCatalog";
 import BodyMap from "./pages/BodyMap";
+import Onboarding, { ONBOARDING_COMPLETE_KEY } from "./pages/Onboarding";
 import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider, useToast } from "./context/ToastContext";
 import { setErrorReporter } from "./lib/db";
@@ -21,24 +22,41 @@ function ErrorReporterBridge() {
   return null;
 }
 
+function useOnboardingComplete() {
+  const [complete, setComplete] = useState(() => {
+    try {
+      return localStorage.getItem(ONBOARDING_COMPLETE_KEY) === "true";
+    } catch {
+      return true;
+    }
+  });
+  return { complete, markComplete: () => setComplete(true) };
+}
+
 export default function App() {
+  const { complete, markComplete } = useOnboardingComplete();
+
   return (
     <ThemeProvider>
       <ToastProvider>
         <ErrorReporterBridge />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="record" element={<HealthRecord />} />
-              <Route path="stats" element={<Statistics />} />
-              <Route path="goals" element={<Goals />} />
-              <Route path="exercise" element={<ExerciseCatalog />} />
-              <Route path="body" element={<BodyMap />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        {complete ? (
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="record" element={<HealthRecord />} />
+                <Route path="stats" element={<Statistics />} />
+                <Route path="goals" element={<Goals />} />
+                <Route path="exercise" element={<ExerciseCatalog />} />
+                <Route path="body" element={<BodyMap />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        ) : (
+          <Onboarding onComplete={markComplete} />
+        )}
       </ToastProvider>
     </ThemeProvider>
   );
