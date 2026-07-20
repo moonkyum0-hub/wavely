@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Dumbbell } from "lucide-react";
+import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Dumbbell, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "홈", icon: LayoutDashboard },
   { to: "/record", label: "기록", icon: ClipboardList },
   { to: "/exercise", label: "운동", icon: Dumbbell },
+  { to: "/body", label: "신체", icon: Activity },
   { to: "/stats", label: "통계", icon: BarChart3 },
   { to: "/goals", label: "목표", icon: Target },
   { to: "/settings", label: "설정", icon: Settings },

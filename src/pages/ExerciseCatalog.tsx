@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { isTauri } from "@tauri-apps/api/core";
 import { Search, X, Clock, ChevronRight, Dumbbell, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
@@ -100,8 +101,9 @@ function ExerciseModal({ ex, isDark, onClose }: { ex: Exercise; isDark: boolean;
       await logExercise({ date: today, exerciseName: ex.name, durationMin: ex.durationMin, completed: true });
       setStatus("done");
     } catch {
-      // dev browser mode — no Tauri runtime
-      setStatus("done");
+      // Real failures already surface a toast (see db.ts); in the browser preview
+      // (no Tauri runtime) there's nothing to actually save, so show success anyway.
+      setStatus(isTauri() ? "idle" : "done");
     }
   }
 

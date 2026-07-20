@@ -86,7 +86,11 @@ export default function Goals() {
     const input = window.prompt(`${goal.title} 목표값 (${goal.unit ?? ""})`, String(goal.targetValue));
     if (!input) return;
     const value = parseFloat(input);
-    if (Number.isNaN(value) || goal.id == null) return;
+    if (Number.isNaN(value) || value <= 0 || value > 1000) {
+      window.alert("0보다 크고 1000 이하인 숫자로 입력해주세요.");
+      return;
+    }
+    if (goal.id == null) return;
     try {
       await updateGoal(goal.id, { targetValue: value });
       await load();

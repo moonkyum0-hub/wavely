@@ -1,4 +1,4 @@
-import { getDb } from "./db";
+import { dbExecute, dbSelect } from "./db";
 import { HealthRecord, calcWaveScore } from "./models";
 
 function toRecord(row: Record<string, unknown>): HealthRecord {
@@ -18,10 +18,9 @@ function toRecord(row: Record<string, unknown>): HealthRecord {
 }
 
 export async function upsertRecord(r: HealthRecord): Promise<void> {
-  const db = await getDb();
   const score = calcWaveScore(r);
   const now = new Date().toISOString();
-  await db.execute(
+  await dbExecute(
     `INSERT INTO health_records (date, sleep_hours, sleep_quality, exercise_min, water_ml, condition, wave_score, note, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
      ON CONFLICT(date) DO UPDATE SET
@@ -35,21 +34,20 @@ export async function upsertRecord(r: HealthRecord): Promise<void> {
        updated_at = excluded.updated_at`,
     [r.date, r.sleepHours ?? null, r.sleepQuality ?? null,
      r.exerciseMin ?? null, r.waterMl ?? null, r.condition ?? null,
-     score, r.note ?? null, now]
+     score, r.note ?? null, now],
+    "오늘의 기록 저장에 실패했어요. 다시 시도해주세요."
   );
 }
 
 export async function getRecord(date: string): Promise<HealthRecord | null> {
-  const db = await getDb();
-  const rows = await db.select<Record<string, unknown>[]>(
+  const rows = await dbSelect<Record<string, unknown>[]>(
     "SELECT * FROM health_records WHERE date = $1 LIMIT 1", [date]
   );
   return rows[0] ? toRecord(rows[0]) : null;
 }
 
 export async function getRecords(from: string, to: string): Promise<HealthRecord[]> {
-  const db = await getDb();
-  const rows = await db.select<Record<string, unknown>[]>(
+  const rows = await dbSelect<Record<string, unknown>[]>(
     "SELECT * FROM health_records WHERE date BETWEEN $1 AND $2 ORDER BY date DESC",
     [from, to]
   );
@@ -57,8 +55,7 @@ export async function getRecords(from: string, to: string): Promise<HealthRecord
 }
 
 export async function deleteRecord(id: number): Promise<void> {
-  const db = await getDb();
-  await db.execute("DELETE FROM health_records WHERE id = $1", [id]);
+  await dbExecute("DELETE FROM health_records WHERE id = $1", [id], "기록 삭제에 실패했어요. 다시 시도해주세요.");
 }
 
 export async function getRecentRecords(days = 7): Promise<HealthRecord[]> {

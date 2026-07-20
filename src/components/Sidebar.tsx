@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Sun, Moon, Dumbbell } from "lucide-react";
+import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Sun, Moon, Dumbbell, Activity } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
@@ -11,6 +11,7 @@ const nav = [
   { to: "/stats", label: "통계", icon: BarChart3 },
   { to: "/goals", label: "목표 설정", icon: Target },
   { to: "/exercise", label: "운동 카탈로그", icon: Dumbbell },
+  { to: "/body", label: "신체 지도", icon: Activity },
   { to: "/settings", label: "설정", icon: Settings },
 ];
 

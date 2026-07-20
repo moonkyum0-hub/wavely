@@ -39,6 +39,18 @@ function scoreTags(r: HealthRecord) {
   return tags;
 }
 
+const FIELD_MAX: Record<"sleep" | "exercise" | "water", number> = { sleep: 24, exercise: 600, water: 10 };
+const FIELD_UNIT: Record<"sleep" | "exercise" | "water", string> = { sleep: "시간", exercise: "분", water: "L" };
+
+function validateField(key: "sleep" | "exercise" | "water", value: string): string | undefined {
+  if (!value) return undefined;
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return "숫자로 입력해주세요";
+  if (num < 0) return "0 이상으로 입력해주세요";
+  if (num > FIELD_MAX[key]) return `${FIELD_MAX[key]}${FIELD_UNIT[key]} 이하로 입력해주세요`;
+  return undefined;
+}
+
 export default function HealthRecord() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -50,6 +62,11 @@ export default function HealthRecord() {
   const [exercise,  setExercise]  = useState("");
   const [water,     setWater]     = useState("");
   const [note,      setNote]      = useState("");
+
+  const sleepError    = validateField("sleep", sleep);
+  const exerciseError = validateField("exercise", exercise);
+  const waterError    = validateField("water", water);
+  const hasErrors = !!(sleepError || exerciseError || waterError);
 
   const [isSaving,    setIsSaving]    = useState(false);
   const [savedScore,  setSavedScore]  = useState<number | null>(null);
@@ -86,6 +103,7 @@ export default function HealthRecord() {
   }, [today, loadRecent]);
 
   async function handleSave() {
+    if (hasErrors) return;
     setIsSaving(true);
     try {
       const record: HealthRecord = {
@@ -186,9 +204,9 @@ export default function HealthRecord() {
             </p>
             <div className="grid grid-cols-3 gap-item">
               {[
-                { label: "수면 시간", icon: "🌙", unit: "h",  placeholder: "7.5",  value: sleep,    set: setSleep,    type: "number", step: "0.5" },
-                { label: "운동 시간", icon: "🏃", unit: "분", placeholder: "30",   value: exercise, set: setExercise, type: "number" },
-                { label: "수분 섭취", icon: "💧", unit: "L",  placeholder: "1.8",  value: water,    set: setWater,    type: "number", step: "0.1" },
+                { label: "수면 시간", icon: "🌙", unit: "h",  placeholder: "7.5",  value: sleep,    set: setSleep,    type: "number", step: "0.5", error: sleepError },
+                { label: "운동 시간", icon: "🏃", unit: "분", placeholder: "30",   value: exercise, set: setExercise, type: "number", step: "1",   error: exerciseError },
+                { label: "수분 섭취", icon: "💧", unit: "L",  placeholder: "1.8",  value: water,    set: setWater,    type: "number", step: "0.1", error: waterError },
               ].map((f) => (
                 <div key={f.label} className="space-y-1.5">
                   <label className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
@@ -198,15 +216,20 @@ export default function HealthRecord() {
                     <Input
                       type={f.type}
                       step={f.step}
+                      min="0"
                       placeholder={f.placeholder}
                       value={f.value}
                       onChange={(e) => f.set(e.target.value)}
-                      className="bg-muted/50 border-border/20 focus-visible:ring-1 text-sm pr-7"
+                      className={cn(
+                        "bg-muted/50 border-border/20 focus-visible:ring-1 text-sm pr-7",
+                        f.error && "border-rose-400 focus-visible:ring-rose-400"
+                      )}
                     />
                     <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
                       {f.unit}
                     </span>
                   </div>
+                  {f.error && <p className="text-[11px] text-rose-500">{f.error}</p>}
                 </div>
               ))}
             </div>
@@ -246,10 +269,10 @@ export default function HealthRecord() {
 
           <button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || hasErrors}
             className={cn(
               "w-full h-11 rounded-xl text-sm font-semibold shadow-sm transition-colors flex items-center justify-center gap-2",
-              isSaving ? "opacity-60 cursor-not-allowed" : "",
+              (isSaving || hasErrors) ? "opacity-60 cursor-not-allowed" : "",
               isDark ? "bg-teal-600 hover:bg-teal-500 text-white" : "bg-[#059669] hover:bg-[#059669]/90 text-white"
             )}
           >

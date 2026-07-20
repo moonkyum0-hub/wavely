@@ -1,4 +1,4 @@
-import { getDb } from "./db";
+import { dbExecute, dbSelect } from "./db";
 import { Goal } from "./models";
 
 function toGoal(row: Record<string, unknown>): Goal {
@@ -17,25 +17,23 @@ function toGoal(row: Record<string, unknown>): Goal {
 }
 
 export async function createGoal(g: Omit<Goal, "id" | "createdAt">): Promise<void> {
-  const db = await getDb();
-  await db.execute(
+  await dbExecute(
     `INSERT INTO goals (type, title, target_value, unit, period, start_date, end_date, is_active)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [g.type, g.title, g.targetValue, g.unit ?? null,
-     g.period, g.startDate ?? null, g.endDate ?? null, g.isActive ? 1 : 0]
+     g.period, g.startDate ?? null, g.endDate ?? null, g.isActive ? 1 : 0],
+    "목표 추가에 실패했어요. 다시 시도해주세요."
   );
 }
 
 export async function getActiveGoals(): Promise<Goal[]> {
-  const db = await getDb();
-  const rows = await db.select<Record<string, unknown>[]>(
+  const rows = await dbSelect<Record<string, unknown>[]>(
     "SELECT * FROM goals WHERE is_active = 1 ORDER BY created_at DESC"
   );
   return rows.map(toGoal);
 }
 
 export async function updateGoal(id: number, updates: Partial<Goal>): Promise<void> {
-  const db = await getDb();
   const fields: string[] = [];
   const values: unknown[] = [];
   let i = 1;
@@ -45,10 +43,13 @@ export async function updateGoal(id: number, updates: Partial<Goal>): Promise<vo
   if (updates.endDate     !== undefined) { fields.push(`end_date = $${i++}`);     values.push(updates.endDate); }
   if (!fields.length) return;
   values.push(id);
-  await db.execute(`UPDATE goals SET ${fields.join(", ")} WHERE id = $${i}`, values);
+  await dbExecute(
+    `UPDATE goals SET ${fields.join(", ")} WHERE id = $${i}`,
+    values,
+    "목표 수정에 실패했어요. 다시 시도해주세요."
+  );
 }
 
 export async function deleteGoal(id: number): Promise<void> {
-  const db = await getDb();
-  await db.execute("DELETE FROM goals WHERE id = $1", [id]);
+  await dbExecute("DELETE FROM goals WHERE id = $1", [id], "목표 삭제에 실패했어요. 다시 시도해주세요.");
 }

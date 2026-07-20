@@ -15,6 +15,20 @@ function toDateStr(d: Date) {
 }
 const WEEKDAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
 
+function deltaText(
+  current: number | null | undefined,
+  prev: number | null | undefined,
+  unit: string,
+  decimals: number,
+  fallback: string
+): string {
+  if (current == null || prev == null) return fallback;
+  const factor = 10 ** decimals;
+  const diff = Math.round((current - prev) * factor) / factor;
+  if (diff === 0) return "어제와 같아요";
+  return `어제보다 ${diff > 0 ? "+" : ""}${diff}${unit}`;
+}
+
 function subScores(r: HealthRecord) {
   return {
     sleep:     Math.round(Math.min((r.sleepHours ?? 0) / 8, 1) * 100),
@@ -64,28 +78,31 @@ export default function Dashboard() {
   const todayRecord = byDate.get(today) ?? null;
   const yesterdayRecord = byDate.get(yesterday) ?? null;
 
-  const waveDelta =
-    todayRecord?.waveScore != null && yesterdayRecord?.waveScore != null
-      ? todayRecord.waveScore - yesterdayRecord.waveScore
-      : null;
+  const todayWaterL = todayRecord?.waterMl != null ? todayRecord.waterMl / 1000 : undefined;
+  const yesterdayWaterL = yesterdayRecord?.waterMl != null ? yesterdayRecord.waterMl / 1000 : undefined;
+
+  const waveSub = deltaText(todayRecord?.waveScore, yesterdayRecord?.waveScore, "", 0, "아직 기록 전");
+  const exerciseSub = deltaText(todayRecord?.exerciseMin, yesterdayRecord?.exerciseMin, "분", 0, "목표 30분");
+  const sleepSub = deltaText(todayRecord?.sleepHours, yesterdayRecord?.sleepHours, "h", 1, "목표 8h");
+  const waterSub = deltaText(todayWaterL, yesterdayWaterL, "L", 1, "목표 2.0L");
 
   const stats = [
     {
       label: "오늘의 파도", value: todayRecord?.waveScore != null ? String(todayRecord.waveScore) : "–", unit: todayRecord ? "점" : "",
-      sub: waveDelta != null ? `어제보다 ${waveDelta >= 0 ? "+" : ""}${waveDelta}` : "아직 기록 전",
+      sub: waveSub,
       icon: TrendingUp, iconColor: "text-blue-400", lightBg: "from-blue-50 to-white", darkBg: "from-blue-900/50 to-transparent",
     },
     {
       label: "운동 완료", value: String(todayRecord?.exerciseMin ?? 0), unit: "분",
-      sub: "목표 30분", icon: Flame, iconColor: "text-emerald-400", lightBg: "from-emerald-50 to-white", darkBg: "from-emerald-900/50 to-transparent",
+      sub: exerciseSub, icon: Flame, iconColor: "text-emerald-400", lightBg: "from-emerald-50 to-white", darkBg: "from-emerald-900/50 to-transparent",
     },
     {
       label: "수면 시간", value: todayRecord?.sleepHours != null ? String(todayRecord.sleepHours) : "–", unit: "h",
-      sub: "목표 8h", icon: Moon, iconColor: "text-violet-400", lightBg: "from-violet-50 to-white", darkBg: "from-violet-900/50 to-transparent",
+      sub: sleepSub, icon: Moon, iconColor: "text-violet-400", lightBg: "from-violet-50 to-white", darkBg: "from-violet-900/50 to-transparent",
     },
     {
       label: "수분 섭취", value: todayRecord?.waterMl != null ? (todayRecord.waterMl / 1000).toFixed(1) : "0", unit: "L",
-      sub: "목표 2.0L", icon: Droplets, iconColor: "text-sky-400", lightBg: "from-sky-50 to-white", darkBg: "from-sky-900/50 to-transparent",
+      sub: waterSub, icon: Droplets, iconColor: "text-sky-400", lightBg: "from-sky-50 to-white", darkBg: "from-sky-900/50 to-transparent",
     },
   ];
 
