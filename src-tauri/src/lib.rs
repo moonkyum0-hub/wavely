@@ -44,6 +44,21 @@ pub fn run() {
             ",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 2,
+            description: "create_cognitive_tests",
+            sql: "
+                CREATE TABLE IF NOT EXISTS cognitive_tests (
+                    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                    date          TEXT NOT NULL,
+                    test_type     TEXT NOT NULL,
+                    metric_value  REAL NOT NULL,
+                    metric_value2 REAL,
+                    created_at    TEXT DEFAULT CURRENT_TIMESTAMP
+                );
+            ",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
-import { Lock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Lock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
 import { getRecords } from "@/lib/healthService";
 import { getExerciseLogsRange } from "@/lib/exerciseService";
+import { getCognitiveTestsRange } from "@/lib/cognitiveService";
 import { EXERCISES, type ExerciseCategory } from "@/lib/exerciseData";
 import { BODY_FUNCTIONS, type BodyFunction } from "@/lib/bodyFunctions";
-import type { HealthRecord, ExerciseLog } from "@/lib/models";
+import type { HealthRecord, ExerciseLog, CognitiveTest } from "@/lib/models";
 
 const FUNCTION_ICON: Record<string, string> = {
   strength: "💪",
@@ -38,6 +40,7 @@ interface FunctionStat {
   avgSleepHours?: number;
   avgWaterL?: number;
   avgCondition?: number;
+  cognitiveCount?: number;
   hasAnyData: boolean;
 }
 
@@ -45,6 +48,7 @@ function computeStat(
   fn: BodyFunction,
   exerciseLogs: ExerciseLog[],
   records: HealthRecord[],
+  cognitiveTests: CognitiveTest[],
   nameToCategory: Map<string, ExerciseCategory>
 ): FunctionStat {
   let exerciseCount: number | undefined;
@@ -60,9 +64,10 @@ function computeStat(
   const avgWaterMl = fn.usesWater ? avg(records.map((r) => r.waterMl).filter((v): v is number => v != null)) : undefined;
   const avgWaterL = avgWaterMl != null ? Math.round(avgWaterMl) / 1000 : undefined;
   const avgCondition = fn.usesCondition ? avg(records.map((r) => r.condition).filter((v): v is number => v != null)) : undefined;
+  const cognitiveCount = fn.usesCognitive ? cognitiveTests.length : undefined;
 
-  const hasAnyData = (exerciseCount ?? 0) > 0 || avgSleepHours != null || avgWaterL != null || avgCondition != null;
-  return { exerciseCount, avgSleepHours, avgWaterL, avgCondition, hasAnyData };
+  const hasAnyData = (exerciseCount ?? 0) > 0 || avgSleepHours != null || avgWaterL != null || avgCondition != null || (cognitiveCount ?? 0) > 0;
+  return { exerciseCount, avgSleepHours, avgWaterL, avgCondition, cognitiveCount, hasAnyData };
 }
 
 function statParts(periodLabel: string, s: FunctionStat): string[] {
@@ -71,6 +76,7 @@ function statParts(periodLabel: string, s: FunctionStat): string[] {
   if (s.avgSleepHours != null) parts.push(`평균 수면 ${s.avgSleepHours}h`);
   if (s.avgWaterL != null) parts.push(`평균 수분 ${s.avgWaterL.toFixed(1)}L`);
   if (s.avgCondition != null) parts.push(`평균 컨디션 ${s.avgCondition}/5`);
+  if (s.cognitiveCount != null) parts.push(`${periodLabel} ${s.cognitiveCount}회 검사`);
   return parts;
 }
 
@@ -80,6 +86,7 @@ export default function BodyMap() {
   const [period, setPeriod] = useState<Period>("week");
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
+  const [cognitiveTests, setCognitiveTests] = useState<CognitiveTest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const nameToCategory = useMemo(() => {
@@ -93,9 +100,12 @@ export default function BodyMap() {
     setIsLoading(true);
     (async () => {
       try {
-        const [recs, logs] = await Promise.all([getRecords(from, to), getExerciseLogsRange(from, to)]);
+        const [recs, logs, tests] = await Promise.all([
+          getRecords(from, to), getExerciseLogsRange(from, to), getCognitiveTestsRange(from, to),
+        ]);
         setRecords(recs);
         setExerciseLogs(logs);
+        setCognitiveTests(tests);
       } catch {
         // dev browser mode — no Tauri runtime
       } finally {
@@ -161,7 +171,7 @@ export default function BodyMap() {
               );
             }
 
-            const stat = computeStat(fn, exerciseLogs, records, nameToCategory);
+            const stat = computeStat(fn, exerciseLogs, records, cognitiveTests, nameToCategory);
             const parts = statParts(PERIOD_LABEL[period], stat);
 
             return (
@@ -187,6 +197,17 @@ export default function BodyMap() {
                       </div>
                     ) : (
                       <p className="text-[11px] text-muted-foreground/70 mt-2.5">아직 기록이 없어요</p>
+                    )}
+                    {fn.id === "brainFocus" && (
+                      <Link
+                        to="/cognitive"
+                        className={cn(
+                          "inline-flex items-center gap-0.5 text-[11px] font-medium mt-2.5",
+                          isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-500 hover:text-blue-600"
+                        )}
+                      >
+                        인지 검사하러 가기 <ChevronRight className="w-3 h-3" />
+                      </Link>
                     )}
                   </div>
                 </div>

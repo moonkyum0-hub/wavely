@@ -8,6 +8,7 @@ import Goals from "./pages/Goals";
 import Settings from "./pages/Settings";
 import ExerciseCatalog from "./pages/ExerciseCatalog";
 import BodyMap from "./pages/BodyMap";
+import CognitiveTests from "./pages/CognitiveTests";
 import Onboarding from "./pages/Onboarding";
 import { ONBOARDING_COMPLETE_KEY } from "./lib/goalTemplates";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="goals" element={<Goals />} />
                 <Route path="exercise" element={<ExerciseCatalog />} />
                 <Route path="body" element={<BodyMap />} />
+                <Route path="cognitive" element={<CognitiveTests />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
             </Routes>

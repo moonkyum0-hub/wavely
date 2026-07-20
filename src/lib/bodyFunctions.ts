@@ -12,6 +12,7 @@ export interface BodyFunction {
   usesSleep?: boolean;
   usesWater?: boolean;
   usesCondition?: boolean;
+  usesCognitive?: boolean;
 }
 
 export const BODY_FUNCTIONS: BodyFunction[] = [
@@ -62,8 +63,9 @@ export const BODY_FUNCTIONS: BodyFunction[] = [
   {
     id: "brainFocus",
     label: "뇌 혈류 · 집중력",
-    status: "locked",
-    blurb: "인지 검사 기능이 추가되면, 유산소 운동과의 관계를 여기서 볼 수 있어요.",
+    status: "active",
+    blurb: "유산소 운동은 뇌 혈류에, 인지 검사는 그 결과를 확인하는 데 기여한다고 알려져 있어요.",
     exerciseCategories: ["CARDIO"],
+    usesCognitive: true,
   },
 ];

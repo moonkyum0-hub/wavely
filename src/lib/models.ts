@@ -35,6 +35,19 @@ export interface ExerciseLog {
   createdAt?: string;
 }
 
+export type CognitiveTestType = "reaction" | "digitSpan" | "stroop";
+
+export interface CognitiveTest {
+  id?: number;
+  date: string;
+  testType: CognitiveTestType;
+  /** reaction: avg ms · digitSpan: max span reached · stroop: accuracy % */
+  metricValue: number;
+  /** stroop only: avg reaction time (ms) on correct trials */
+  metricValue2?: number;
+  createdAt?: string;
+}
+
 export function calcWaveScore(r: Partial<HealthRecord>): number {
   const sleep    = Math.min((r.sleepHours ?? 0) / 8, 1) * 100;
   const exercise = Math.min((r.exerciseMin ?? 0) / 30, 1) * 100;
