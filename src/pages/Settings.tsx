@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Sun, Moon, Bell, Database, Shield, ChevronRight } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 import { getRecords } from "@/lib/healthService";
+import { PERSONAS, ONBOARDING_PERSONA_KEY, type PersonaId } from "@/lib/goalTemplates";
 import type { HealthRecord } from "@/lib/models";
 
 function toDateStr(d: Date) {
@@ -31,8 +33,28 @@ function downloadCsv(csv: string, filename: string) {
 export default function Settings() {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
+  const { show: showToast } = useToast();
   const [streakCount, setStreakCount] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [persona, setPersonaState] = useState<PersonaId | null>(() => {
+    try {
+      return (localStorage.getItem(ONBOARDING_PERSONA_KEY) as PersonaId | null) ?? null;
+    } catch {
+      return null;
+    }
+  });
+
+  function selectPersona(id: PersonaId | null) {
+    try {
+      if (id) localStorage.setItem(ONBOARDING_PERSONA_KEY, id);
+      else localStorage.removeItem(ONBOARDING_PERSONA_KEY);
+    } catch {
+      // localStorage unavailable
+    }
+    setPersonaState(id);
+    const label = id ? PERSONAS.find((p) => p.id === id)?.label : "선택 안 함";
+    showToast(`유형을 "${label}"(으)로 바꿨어요. 새 목표는 목표 설정 페이지에서 추가할 수 있어요.`, "info");
+  }
 
   useEffect(() => {
     (async () => {
@@ -181,6 +203,41 @@ export default function Settings() {
               <Moon className="w-3.5 h-3.5" /> 다크
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Persona / user type */}
+      <div className="rounded-xl border border-border/20 shadow-sm overflow-hidden">
+        <div className={`${isDark ? "bg-black/15" : "bg-gradient-to-r from-[#1e3a8a]/5 to-transparent"} px-card pt-section pb-item border-b border-border/50`}>
+          <h3 className="text-section font-bold text-foreground">내 유형</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">선택한 유형에 따라 새 목표 추천이 달라져요</p>
+        </div>
+        <div className="bg-card px-card py-section flex flex-wrap gap-2">
+          {PERSONAS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => selectPersona(p.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors border",
+                persona === p.id
+                  ? isDark ? "bg-blue-500/20 border-blue-500/40 text-blue-300" : "bg-[#1e3a8a]/8 border-[#1e3a8a]/30 text-[#1e3a8a]"
+                  : "border-border text-muted-foreground hover:border-muted-foreground/50"
+              )}
+            >
+              <span>{p.emoji}</span> {p.label}
+            </button>
+          ))}
+          <button
+            onClick={() => selectPersona(null)}
+            className={cn(
+              "px-3 py-2 rounded-lg text-xs font-semibold transition-colors border",
+              persona === null
+                ? isDark ? "bg-blue-500/20 border-blue-500/40 text-blue-300" : "bg-[#1e3a8a]/8 border-[#1e3a8a]/30 text-[#1e3a8a]"
+                : "border-border text-muted-foreground hover:border-muted-foreground/50"
+            )}
+          >
+            선택 안 함
+          </button>
         </div>
       </div>
 

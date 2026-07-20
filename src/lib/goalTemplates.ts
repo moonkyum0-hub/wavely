@@ -1,5 +1,8 @@
 import type { Goal } from "./models";
 
+export const ONBOARDING_COMPLETE_KEY = "wavely-onboarding-complete";
+export const ONBOARDING_PERSONA_KEY = "wavely-persona";
+
 export type PersonaId = "student" | "worker" | "patient";
 
 export const PERSONAS: { id: PersonaId; label: string; emoji: string; desc: string }[] = [
