@@ -1,0 +1,21 @@
+# npm(프론트엔드), cargo(src-tauri), GitHub Actions 버전을 매주 점검해
+# 업데이트 PR을 자동으로 올림. 보안 취약점 알림은 GitHub이 별도로 처리하며,
+# 이 파일은 정기 버전 최신화용.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
