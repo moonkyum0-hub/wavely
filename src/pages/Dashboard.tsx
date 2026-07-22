@@ -135,15 +135,24 @@ export default function Dashboard() {
       : "기록이 쌓이면 이번 주 흐름을 여기서 보여드릴게요.";
 
   const streakDays = useMemo(() => {
-    const arr: { day: number; date: string; done: boolean }[] = [];
+    const arr: { day: number; date: string; done: boolean; daysAgo: number }[] = [];
     for (let i = 20; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const ds = toDateStr(d);
-      arr.push({ day: d.getDate(), date: ds, done: byDate.has(ds) });
+      arr.push({ day: d.getDate(), date: ds, done: byDate.has(ds), daysAgo: i });
     }
     return arr;
   }, [byDate]);
+
+  // Fade UI — 놓친 날은 실패 표시가 아니라 옅어지는 안개로. 최근에 놓친 날은 아직 또렷하고,
+  // 오래될수록 옅어진다. Streaks/Habitica류의 "0으로 리셋" 대신 Wavely가 선택한 표현.
+  function missedDayFade(daysAgo: number) {
+    const t = Math.min(daysAgo / 14, 1);
+    const bg = 0.16 - t * 0.11;
+    const fg = 0.4 - t * 0.24;
+    return { background: `rgba(255,255,255,${bg})`, color: `rgba(255,255,255,${fg})` };
+  }
 
   const streakCount = useMemo(() => {
     let count = 0;
@@ -360,9 +369,13 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-9 gap-1 md:gap-1.5">
             {streakDays.map((s) => (
-              <div key={s.date} className={`aspect-square rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-semibold transition-all ${
-                s.done ? "bg-white/90 text-[#1e3a8a] shadow-sm" : "bg-white/10 text-white/30"
-              }`}>
+              <div
+                key={s.date}
+                className={`aspect-square rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-semibold transition-all ${
+                  s.done ? "bg-white/90 text-[#1e3a8a] shadow-sm" : "blur-[0.3px]"
+                }`}
+                style={s.done ? undefined : missedDayFade(s.daysAgo)}
+              >
                 {s.day}
               </div>
             ))}

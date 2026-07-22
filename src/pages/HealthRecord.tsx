@@ -6,7 +6,7 @@ import { Zap, Star, ChevronRight, CheckCircle2 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import EmptyState from "@/components/EmptyState";
 import { LogItemSkeleton } from "@/components/Skeleton";
-import { upsertRecord, getRecord, getRecentRecords } from "@/lib/healthService";
+import { upsertRecord, getRecord, getRecords, getRecentRecords } from "@/lib/healthService";
 import { calcWaveScore, type HealthRecord as HealthRecordModel } from "@/lib/models";
 
 const CONDITIONS = [
@@ -70,6 +70,7 @@ export default function HealthRecord() {
 
   const [isSaving,    setIsSaving]    = useState(false);
   const [savedScore,  setSavedScore]  = useState<number | null>(null);
+  const [isReturning, setIsReturning] = useState(false);
   const [recentLogs,  setRecentLogs]  = useState<HealthRecordModel[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
 
@@ -120,6 +121,19 @@ export default function HealthRecord() {
       const score = calcWaveScore(record);
       await upsertRecord(record);
       setSavedScore(score);
+
+      // 복귀 환영 UX — 어제 기록이 비어있는데 그 이전엔 기록이 있었다면 "공백 후 복귀"로 판단해
+      // 저장 배너를 축하/환영 톤으로 바꾼다. 리셋이나 처벌 연출 없이, 돌아온 것 자체를 반긴다.
+      try {
+        const yesterday = toDateStr(new Date(Date.now() - 86400000));
+        const windowStart = toDateStr(new Date(Date.now() - 30 * 86400000));
+        const priorWindow = await getRecords(windowStart, yesterday);
+        const hadYesterday = priorWindow.some((r) => r.date === yesterday);
+        setIsReturning(!hadYesterday && priorWindow.length > 0);
+      } catch {
+        setIsReturning(false);
+      }
+
       await loadRecent();
     } catch (e) {
       console.error("저장 실패:", e);
@@ -262,11 +276,18 @@ export default function HealthRecord() {
           {savedScore !== null && (
             <div className={cn(
               "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium",
-              isDark ? "bg-teal-900/40 border border-teal-700/40 text-teal-300"
-                     : "bg-emerald-50 border border-emerald-200 text-emerald-700"
+              isReturning
+                ? isDark ? "bg-blue-900/40 border border-blue-700/40 text-blue-300"
+                         : "bg-blue-50 border border-blue-200 text-blue-700"
+                : isDark ? "bg-teal-900/40 border border-teal-700/40 text-teal-300"
+                         : "bg-emerald-50 border border-emerald-200 text-emerald-700"
             )}>
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>저장 완료! 오늘의 파도 점수 <strong>{savedScore}점</strong></span>
+              {isReturning ? (
+                <span>다시 만나서 반가워요. 파도는 언제든 다시 밀려와요 🌊 오늘의 파도 점수 <strong>{savedScore}점</strong></span>
+              ) : (
+                <span>저장 완료! 오늘의 파도 점수 <strong>{savedScore}점</strong></span>
+              )}
             </div>
           )}
 
