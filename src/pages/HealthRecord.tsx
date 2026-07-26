@@ -118,7 +118,7 @@ export default function HealthRecord() {
         waterMl:     water    ? Math.round(parseFloat(water) * 1000) : undefined,
         note:        note || undefined,
       };
-      const score = calcWaveScore(record);
+      const score = calcWaveScore(record, { sleep: 8, exercise: 30, water: 2000 });
       await upsertRecord(record);
       setSavedScore(score);
 

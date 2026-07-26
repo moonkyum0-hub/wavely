@@ -48,10 +48,14 @@ export interface CognitiveTest {
   createdAt?: string;
 }
 
-export function calcWaveScore(r: Partial<HealthRecord>): number {
-  const sleep    = Math.min((r.sleepHours ?? 0) / 8, 1) * 100;
-  const exercise = Math.min((r.exerciseMin ?? 0) / 30, 1) * 100;
-  const water    = Math.min((r.waterMl ?? 0) / 2000, 1) * 100;
-  const cond     = ((r.condition ?? 0) / 5) * 100;
-  return Math.round(sleep * 0.35 + exercise * 0.30 + water * 0.20 + cond * 0.15);
+export function calcWaveScore(
+  r: Partial<HealthRecord>,
+  targets: { sleep: number; exercise: number; water: number }
+): number | null {
+  const parts: number[] = [];
+  if (r.sleepHours != null)  parts.push(Math.min(r.sleepHours / targets.sleep, 1) * 100);
+  if (r.exerciseMin != null) parts.push(Math.min(r.exerciseMin / targets.exercise, 1) * 100);
+  if (r.waterMl != null)     parts.push(Math.min(r.waterMl / targets.water, 1) * 100);
+  if (parts.length === 0) return null;
+  return Math.round(parts.reduce((a, b) => a + b, 0) / parts.length);
 }
