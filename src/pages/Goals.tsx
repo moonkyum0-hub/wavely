@@ -19,12 +19,12 @@ const GOAL_META: Record<Goal["type"], {
   custom:   { icon: "🎯", color: "bg-rose-500",    textLight: "text-rose-600",    textDark: "text-rose-400",    trackLight: "bg-rose-100",    trackDark: "bg-rose-900/40" },
 };
 
-function currentValueFor(type: Goal["type"], today: HealthRecord | null): number {
+function currentValueFor(type: Goal["type"], today: HealthRecord | null): number | null {
   switch (type) {
     case "sleep":    return today?.sleepHours ?? 0;
     case "exercise": return today?.exerciseMin ?? 0;
     case "water":    return today ? (today.waterMl ?? 0) / 1000 : 0;
-    case "wave":     return today?.waveScore ?? 0;
+    case "wave":     return today?.waveScore ?? null;
     default:         return 0;
   }
 }
@@ -95,7 +95,10 @@ export default function Goals() {
     }
   }
 
-  const achievedCount = goals.filter((g) => currentValueFor(g.type, today) >= g.targetValue).length;
+  const achievedCount = goals.filter((g) => {
+    const current = currentValueFor(g.type, today);
+    return current != null && current >= g.targetValue;
+  }).length;
 
   if (isLoading) {
     return (
@@ -142,7 +145,7 @@ export default function Goals() {
           {goals.map((g) => {
             const meta = GOAL_META[g.type];
             const current = currentValueFor(g.type, today);
-            const pct = Math.min(100, Math.round((current / g.targetValue) * 100)) || 0;
+            const pct = current != null ? Math.min(100, Math.round((current / g.targetValue) * 100)) || 0 : null;
             return (
               <div
                 key={g.id}
@@ -154,15 +157,15 @@ export default function Goals() {
                     <div className="flex items-center justify-between mb-2 gap-2">
                       <span className="text-sm font-semibold text-foreground truncate">{g.title}</span>
                       <span className="text-[11px] text-muted-foreground shrink-0">
-                        {formatValue(g.type, current)}{g.unit} / {g.targetValue}{g.unit}
+                        {current != null ? `${formatValue(g.type, current)}${g.unit}` : "–"} / {g.targetValue}{g.unit}
                       </span>
                     </div>
                     <div className={`h-2 ${isDark ? meta.trackDark : meta.trackLight} rounded-full overflow-hidden`}>
-                      <div className={cn("h-full rounded-full transition-all", meta.color)} style={{ width: `${pct}%` }} />
+                      <div className={cn("h-full rounded-full transition-all", meta.color)} style={{ width: `${pct ?? 0}%` }} />
                     </div>
                   </div>
                   <span className={cn("text-sm font-bold shrink-0 w-9 text-right", isDark ? meta.textDark : meta.textLight)}>
-                    {pct}%
+                    {pct != null ? `${pct}%` : "–"}
                   </span>
                   <button onClick={() => editTarget(g)} className="text-muted-foreground hover:text-foreground transition-colors shrink-0 p-1">
                     <Pencil className="w-3.5 h-3.5" />

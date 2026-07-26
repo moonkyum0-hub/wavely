@@ -79,11 +79,11 @@ export default function Statistics() {
     return Math.round(recs.reduce((sum, r) => sum + fn(r), 0) / recs.length);
   }
 
-  const currentAvgWave = avgOf(currentRecs, (r) => r.waveScore ?? 0);
-  const prevAvgWave = avgOf(prevRecs, (r) => r.waveScore ?? 0);
+  const currentAvgWave = avgOf(currentRecs.filter((r) => r.waveScore != null), (r) => r.waveScore as number);
+  const prevAvgWave = avgOf(prevRecs.filter((r) => r.waveScore != null), (r) => r.waveScore as number);
   const waveDelta = currentAvgWave != null && prevAvgWave != null ? currentAvgWave - prevAvgWave : null;
 
-  const achievedDays = currentRecs.filter((r) => (r.waveScore ?? 0) >= waveGoalTarget).length;
+  const achievedDays = currentRecs.filter((r) => r.waveScore != null && r.waveScore >= waveGoalTarget).length;
 
   const bestRecord = currentRecs.reduce<HealthRecord | null>(
     (best, r) => (r.waveScore != null && (best == null || r.waveScore > (best.waveScore ?? -1)) ? r : best),

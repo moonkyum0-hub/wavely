@@ -32,10 +32,9 @@ function deltaText(
 
 function subScores(r: HealthRecord, targets: { sleep: number; exercise: number; water: number }) {
   return {
-    sleep:     Math.round(Math.min((r.sleepHours ?? 0) / targets.sleep, 1) * 100),
-    exercise:  Math.round(Math.min((r.exerciseMin ?? 0) / targets.exercise, 1) * 100),
-    water:     Math.round(Math.min((r.waterMl ?? 0) / targets.water, 1) * 100),
-    condition: Math.round(((r.condition ?? 0) / 5) * 100),
+    sleep:    r.sleepHours  != null ? Math.round(Math.min(r.sleepHours / targets.sleep, 1) * 100) : null,
+    exercise: r.exerciseMin != null ? Math.round(Math.min(r.exerciseMin / targets.exercise, 1) * 100) : null,
+    water:    r.waterMl     != null ? Math.round(Math.min(r.waterMl / targets.water, 1) * 100) : null,
   };
 }
 
@@ -94,9 +93,9 @@ export default function Dashboard() {
   const yesterdayWaterL = yesterdayRecord?.waterMl != null ? yesterdayRecord.waterMl / 1000 : undefined;
 
   const waveSub = deltaText(todayRecord?.waveScore, yesterdayRecord?.waveScore, "", 0, "아직 기록 전");
-  const exerciseSub = deltaText(todayRecord?.exerciseMin, yesterdayRecord?.exerciseMin, "분", 0, "목표 30분");
-  const sleepSub = deltaText(todayRecord?.sleepHours, yesterdayRecord?.sleepHours, "h", 1, "목표 8h");
-  const waterSub = deltaText(todayWaterL, yesterdayWaterL, "L", 1, "목표 2.0L");
+  const exerciseSub = deltaText(todayRecord?.exerciseMin, yesterdayRecord?.exerciseMin, "분", 0, `목표 ${targets.exercise}분`);
+  const sleepSub = deltaText(todayRecord?.sleepHours, yesterdayRecord?.sleepHours, "h", 1, `목표 ${targets.sleep}h`);
+  const waterSub = deltaText(todayWaterL, yesterdayWaterL, "L", 1, `목표 ${(targets.water / 1000).toFixed(1)}L`);
 
   const stats = [
     {
@@ -184,7 +183,6 @@ export default function Dashboard() {
         { label: "수면", value: todaySub.sleep, color: ct.isDark ? "#a78bfa" : "#7c3aed" },
         { label: "운동", value: todaySub.exercise, color: ct.isDark ? "#34d399" : "#059669" },
         { label: "수분", value: todaySub.water, color: ct.blue },
-        { label: "컨디션", value: todaySub.condition, color: ct.isDark ? "#fbbf24" : "#d97706" },
       ]
     : [];
 
@@ -366,9 +364,11 @@ export default function Dashboard() {
                 <div key={s.label} className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground w-12 shrink-0">{s.label}</span>
                   <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${s.value}%`, background: s.color }} />
+                    <div className="h-full rounded-full transition-all" style={{ width: `${s.value ?? 0}%`, background: s.color }} />
                   </div>
-                  <span className="text-xs font-semibold text-foreground w-9 text-right shrink-0">{s.value}%</span>
+                  <span className="text-xs font-semibold text-foreground w-9 text-right shrink-0">
+                    {s.value != null ? `${s.value}%` : "–"}
+                  </span>
                 </div>
               ))}
             </div>

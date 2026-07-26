@@ -71,6 +71,7 @@ export default function HealthRecord() {
 
   const [isSaving,    setIsSaving]    = useState(false);
   const [savedScore,  setSavedScore]  = useState<number | null>(null);
+  const [justSaved,   setJustSaved]   = useState(false);
   const [isReturning, setIsReturning] = useState(false);
   const [recentLogs,  setRecentLogs]  = useState<HealthRecordModel[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
@@ -123,6 +124,7 @@ export default function HealthRecord() {
       const score = calcWaveScore(record, targets);
       await upsertRecord(record);
       setSavedScore(score);
+      setJustSaved(true);
 
       // 복귀 환영 UX — 어제 기록이 비어있는데 그 이전엔 기록이 있었다면 "공백 후 복귀"로 판단해
       // 저장 배너를 축하/환영 톤으로 바꾼다. 리셋이나 처벌 연출 없이, 돌아온 것 자체를 반긴다.
@@ -275,7 +277,7 @@ export default function HealthRecord() {
           )}
 
           {/* Saved score banner */}
-          {savedScore !== null && (
+          {justSaved && (
             <div className={cn(
               "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium",
               isReturning
@@ -286,9 +288,15 @@ export default function HealthRecord() {
             )}>
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               {isReturning ? (
-                <span>다시 만나서 반가워요. 파도는 언제든 다시 밀려와요 🌊 오늘의 파도 점수 <strong>{savedScore}점</strong></span>
-              ) : (
+                savedScore != null ? (
+                  <span>다시 만나서 반가워요. 파도는 언제든 다시 밀려와요 🌊 오늘의 파도 점수 <strong>{savedScore}점</strong></span>
+                ) : (
+                  <span>다시 만나서 반가워요. 파도는 언제든 다시 밀려와요 🌊 오늘 컨디션이 기록됐어요</span>
+                )
+              ) : savedScore != null ? (
                 <span>저장 완료! 오늘의 파도 점수 <strong>{savedScore}점</strong></span>
+              ) : (
+                <span>저장 완료! 오늘 컨디션이 기록됐어요</span>
               )}
             </div>
           )}
@@ -332,15 +340,15 @@ export default function HealthRecord() {
           ) : (
             <div className="divide-y divide-border/50">
               {recentLogs.map((log) => {
-                const score = log.waveScore ?? 0;
+                const score = log.waveScore;
                 return (
                   <div key={log.id} className="flex items-center gap-3 px-card py-item">
-                    <span className="text-lg shrink-0">{waveEmoji(score)}</span>
+                    <span className="text-lg shrink-0">{score != null ? waveEmoji(score) : "–"}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-semibold text-foreground">{log.date}</span>
                         <span className={cn("text-[11px] font-bold", isDark ? "text-blue-400" : "text-blue-500")}>
-                          {score}점
+                          {score != null ? `${score}점` : "–"}
                         </span>
                       </div>
                       <div className="flex gap-1.5 flex-wrap">
