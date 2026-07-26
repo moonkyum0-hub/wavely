@@ -8,6 +8,7 @@ import EmptyState from "@/components/EmptyState";
 import { LogItemSkeleton } from "@/components/Skeleton";
 import { upsertRecord, getRecord, getRecords, getRecentRecords } from "@/lib/healthService";
 import { calcWaveScore, type HealthRecord as HealthRecordModel } from "@/lib/models";
+import { getActiveGoals, getTargets } from "@/lib/goalService";
 
 const CONDITIONS = [
   { label: "힘들어요", emoji: "😞", value: 1,
@@ -118,7 +119,8 @@ export default function HealthRecord() {
         waterMl:     water    ? Math.round(parseFloat(water) * 1000) : undefined,
         note:        note || undefined,
       };
-      const score = calcWaveScore(record, { sleep: 8, exercise: 30, water: 2000 });
+      const targets = getTargets(await getActiveGoals());
+      const score = calcWaveScore(record, targets);
       await upsertRecord(record);
       setSavedScore(score);
 

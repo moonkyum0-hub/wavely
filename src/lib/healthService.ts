@@ -1,5 +1,6 @@
 import { dbExecute, dbSelect } from "./db";
 import { HealthRecord, calcWaveScore } from "./models";
+import { getActiveGoals, getTargets } from "./goalService";
 
 function toRecord(row: Record<string, unknown>): HealthRecord {
   return {
@@ -18,7 +19,8 @@ function toRecord(row: Record<string, unknown>): HealthRecord {
 }
 
 export async function upsertRecord(r: HealthRecord): Promise<void> {
-  const score = calcWaveScore(r, { sleep: 8, exercise: 30, water: 2000 });
+  const targets = getTargets(await getActiveGoals());
+  const score = calcWaveScore(r, targets);
   const now = new Date().toISOString();
   await dbExecute(
     `INSERT INTO health_records (date, sleep_hours, sleep_quality, exercise_min, water_ml, condition, wave_score, note, created_at, updated_at)
