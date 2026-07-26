@@ -1,5 +1,6 @@
 import { dbExecute, dbSelect } from "./db";
 import { Goal } from "./models";
+import { DEFAULT_GOAL_TEMPLATE } from "./goalTemplates";
 
 function toGoal(row: Record<string, unknown>): Goal {
   return {
@@ -52,4 +53,19 @@ export async function updateGoal(id: number, updates: Partial<Goal>): Promise<vo
 
 export async function deleteGoal(id: number): Promise<void> {
   await dbExecute("DELETE FROM goals WHERE id = $1", [id], "목표 삭제에 실패했어요. 다시 시도해주세요.");
+}
+
+export function getTargets(goals: Goal[]): { sleep: number; exercise: number; water: number } {
+  const defaults = {
+    sleep:    DEFAULT_GOAL_TEMPLATE.find((g) => g.type === "sleep")!.targetValue,
+    exercise: DEFAULT_GOAL_TEMPLATE.find((g) => g.type === "exercise")!.targetValue,
+    water:    DEFAULT_GOAL_TEMPLATE.find((g) => g.type === "water")!.targetValue,
+  };
+  const find = (type: Goal["type"], fallback: number) =>
+    goals.find((g) => g.type === type)?.targetValue ?? fallback;
+  return {
+    sleep:    find("sleep", defaults.sleep),
+    exercise: find("exercise", defaults.exercise),
+    water:    find("water", defaults.water) * 1000,
+  };
 }
