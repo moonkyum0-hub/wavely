@@ -485,14 +485,30 @@
     });
   }
 
-  // ── Auto-complete Phase 0 & Phase 1 (already done) ─────────────────────
+  // ── Auto-complete phases/tasks already done in the codebase ─────────────
+  // p0, p1: fully done. p2: fully done. p3, p4: specific task indices done —
+  // see git log / CLAUDE.md data-honesty principle for why some items in
+  // p3/p4 stay unchecked (e.g. record edit/delete UI and profile real-data
+  // wiring don't exist yet; native notifications, correlation analysis,
+  // milestone certificates, and the wellness simulator haven't been built).
   (function initCompletedPhases() {
     const checks = loadChecks();
     let changed = false;
-    ['p0', 'p1'].forEach(phaseId => {
+    const fullyDone = { p0: 'all', p1: 'all', p2: 'all' };
+    const partiallyDone = {
+      p3: [0, 1, 3, 4, 6, 7, 8], // not done: 2 (기록 수정/삭제 플로우), 5 (프로필 실데이터)
+      p4: [0, 1, 2, 3, 5],       // not done: 4 (네이티브 알림), 6 (상관관계 분석), 7 (업그레이드 인증서), 8 (복지 시뮬레이터)
+    };
+    Object.keys(fullyDone).forEach(phaseId => {
       const ph = phases.find(p => p.id === phaseId);
       if (!ph) return;
       ph.tasks.forEach((_, i) => {
+        const key = `${phaseId}-${i}`;
+        if (!checks[key]) { checks[key] = true; changed = true; }
+      });
+    });
+    Object.entries(partiallyDone).forEach(([phaseId, doneIndices]) => {
+      doneIndices.forEach(i => {
         const key = `${phaseId}-${i}`;
         if (!checks[key]) { checks[key] = true; changed = true; }
       });
