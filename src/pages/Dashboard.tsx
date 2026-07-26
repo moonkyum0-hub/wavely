@@ -8,6 +8,7 @@ import EmptyState from "@/components/EmptyState";
 import { StatCardSkeleton, ChartCardSkeleton } from "@/components/Skeleton";
 import WavelyLogo from "@/components/WavelyLogo";
 import { getRecentRecords } from "@/lib/healthService";
+import { getActiveGoals, getTargets } from "@/lib/goalService";
 import type { HealthRecord } from "@/lib/models";
 
 function toDateStr(d: Date) {
@@ -29,11 +30,11 @@ function deltaText(
   return `어제보다 ${diff > 0 ? "+" : ""}${diff}${unit}`;
 }
 
-function subScores(r: HealthRecord) {
+function subScores(r: HealthRecord, targets: { sleep: number; exercise: number; water: number }) {
   return {
-    sleep:     Math.round(Math.min((r.sleepHours ?? 0) / 8, 1) * 100),
-    exercise:  Math.round(Math.min((r.exerciseMin ?? 0) / 30, 1) * 100),
-    water:     Math.round(Math.min((r.waterMl ?? 0) / 2000, 1) * 100),
+    sleep:     Math.round(Math.min((r.sleepHours ?? 0) / targets.sleep, 1) * 100),
+    exercise:  Math.round(Math.min((r.exerciseMin ?? 0) / targets.exercise, 1) * 100),
+    water:     Math.round(Math.min((r.waterMl ?? 0) / targets.water, 1) * 100),
     condition: Math.round(((r.condition ?? 0) / 5) * 100),
   };
 }
@@ -51,6 +52,7 @@ export default function Dashboard() {
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>("wave");
+  const [targets, setTargets] = useState({ sleep: 8, exercise: 30, water: 2000 });
 
   useEffect(() => {
     (async () => {
@@ -61,6 +63,16 @@ export default function Dashboard() {
         // dev browser mode — no Tauri runtime
       } finally {
         setIsLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setTargets(getTargets(await getActiveGoals()));
+      } catch {
+        // dev browser mode — no Tauri runtime, keep defaults
       }
     })();
   }, []);
@@ -90,6 +102,7 @@ export default function Dashboard() {
     {
       label: "오늘의 파도", value: todayRecord?.waveScore != null ? String(todayRecord.waveScore) : "–", unit: todayRecord ? "점" : "",
       sub: waveSub,
+      caption: "수면·운동·수분, 내 목표 대비 평균",
       icon: TrendingUp, iconColor: "text-blue-400", lightBg: "from-blue-50 to-white", darkBg: "from-blue-900/50 to-transparent",
     },
     {
@@ -165,7 +178,7 @@ export default function Dashboard() {
     return count;
   }, [byDate]);
 
-  const todaySub = todayRecord ? subScores(todayRecord) : null;
+  const todaySub = todayRecord ? subScores(todayRecord, targets) : null;
   const subRows = todaySub
     ? [
         { label: "수면", value: todaySub.sleep, color: ct.isDark ? "#a78bfa" : "#7c3aed" },
@@ -247,7 +260,7 @@ export default function Dashboard() {
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-item">
-        {stats.map(({ label, value, unit, sub, icon: Icon, iconColor, lightBg }) => (
+        {stats.map(({ label, value, unit, sub, caption, icon: Icon, iconColor, lightBg }) => (
           <div
             key={label}
             className={`rounded-xl border border-border/20 shadow-sm p-card transition-shadow hover:shadow-md ${
@@ -262,6 +275,7 @@ export default function Dashboard() {
               {value}<span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span>
             </div>
             <p className="text-[11px] mt-2 font-medium text-muted-foreground">{sub}</p>
+            {caption && <p className="text-[10px] mt-1 text-muted-foreground/70">{caption}</p>}
           </div>
         ))}
       </div>
