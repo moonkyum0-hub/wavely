@@ -241,6 +241,19 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Wave score explainer */}
+      <div className="rounded-xl border border-border/20 shadow-sm overflow-hidden">
+        <div className={`${isDark ? "bg-black/15" : "bg-gradient-to-r from-[#1e3a8a]/5 to-transparent"} px-card pt-section pb-item border-b border-border/50`}>
+          <h3 className="text-section font-bold text-foreground">파도 점수란?</h3>
+        </div>
+        <div className="bg-card px-card py-section">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            수면·운동·수분, 내가 설정한 목표 대비 오늘 달성률의 평균이에요. 의학적으로 검증된 지표가
+            아니라 내 목표 기준으로 흐름을 보는 참고용 숫자예요. 목표는 목표 설정에서 언제든 바꿀 수 있어요.
+          </p>
+        </div>
+      </div>
+
       {/* Other settings sections */}
       {menuSections.map((section) => (
         <div key={section.title} className="rounded-xl border border-border/20 shadow-sm overflow-hidden">
