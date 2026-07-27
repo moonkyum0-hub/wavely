@@ -1,14 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Dumbbell, Activity } from "lucide-react";
+import { LayoutDashboard, ClipboardList, BarChart3, Settings, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// 하단 네비는 5개로 제한한다 (모바일 가이드라인 3~5개). 나머지 화면은 맥락이 맞는 곳에서
+// 진입한다 — 운동 카탈로그는 건강 기록의 운동 입력 옆, 인지 검사는 신체 지도,
+// 목표 설정은 설정 화면의 바로가기.
 const nav = [
   { to: "/", label: "홈", icon: LayoutDashboard },
   { to: "/record", label: "기록", icon: ClipboardList },
-  { to: "/exercise", label: "운동", icon: Dumbbell },
   { to: "/body", label: "신체", icon: Activity },
   { to: "/stats", label: "통계", icon: BarChart3 },
-  { to: "/goals", label: "목표", icon: Target },
   { to: "/settings", label: "설정", icon: Settings },
 ];
 

@@ -1,10 +1,19 @@
-import { useState, useEffect } from "react";
-import { Sun, Moon, Bell, Database, Shield, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Sun, Moon, Bell, Database, Shield, ChevronRight, Target, Dumbbell, Brain } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 import { getRecords } from "@/lib/healthService";
+import { useStreakCount } from "@/hooks/useStreakCount";
 import { PERSONAS, ONBOARDING_PERSONA_KEY, type PersonaId } from "@/lib/goalTemplates";
+import {
+  avatarInitial,
+  displayName,
+  getProfileName,
+  setProfileName,
+  MAX_NAME_LENGTH,
+} from "@/lib/profile";
 import {
   ensurePermission,
   getReminderTime,
@@ -42,7 +51,8 @@ export default function Settings() {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
   const { show: showToast } = useToast();
-  const [streakCount, setStreakCount] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const streakCount = useStreakCount();
   const [isExporting, setIsExporting] = useState(false);
   const [persona, setPersonaState] = useState<PersonaId | null>(() => {
     try {
@@ -51,6 +61,18 @@ export default function Settings() {
       return null;
     }
   });
+
+  const [profileName, setProfileNameState] = useState(() => getProfileName());
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+
+  function saveName() {
+    const next = nameDraft.trim().slice(0, MAX_NAME_LENGTH);
+    setProfileName(next);
+    setProfileNameState(next);
+    setIsEditingName(false);
+    showToast(next ? `이름을 "${next}"(으)로 바꿨어요.` : "이름을 지웠어요.", "info");
+  }
 
   const [reminderOn, setReminderOn] = useState(() => isReminderEnabled());
   const [reminderAt, setReminderAt] = useState(() => getReminderTime());
@@ -91,25 +113,6 @@ export default function Settings() {
     showToast(`유형을 "${label}"(으)로 바꿨어요. 새 목표는 목표 설정 페이지에서 추가할 수 있어요.`, "info");
   }
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const recs = await getRecords("2000-01-01", toDateStr(new Date()));
-        const byDate = new Set(recs.map((r) => r.date));
-        let count = 0;
-        const d = new Date();
-        if (!byDate.has(toDateStr(d))) d.setDate(d.getDate() - 1);
-        while (byDate.has(toDateStr(d))) {
-          count++;
-          d.setDate(d.getDate() - 1);
-        }
-        setStreakCount(count);
-      } catch {
-        // dev browser mode — no Tauri runtime
-      }
-    })();
-  }, []);
-
   async function handleExport() {
     setIsExporting(true);
     try {
@@ -132,6 +135,15 @@ export default function Settings() {
   };
 
   const menuSections: { title: string; items: MenuItem[] }[] = [
+    {
+      // 모바일 하단 네비를 5개로 줄이면서, 빠진 화면들의 진입점을 여기에 둔다
+      title: "바로가기",
+      items: [
+        { icon: Target, label: "목표 설정", sub: "수면·운동·수분·파도 점수 목표", action: "arrow", onClick: () => navigate("/goals") },
+        { icon: Dumbbell, label: "운동 카탈로그", sub: "동작별 자세와 부위 보기", action: "arrow", onClick: () => navigate("/exercise") },
+        { icon: Brain, label: "인지 검사", sub: "숫자 기억 · 스트룹 · 반응 속도", action: "arrow", onClick: () => navigate("/cognitive") },
+      ],
+    },
     {
       title: "데이터",
       items: [
@@ -158,17 +170,60 @@ export default function Settings() {
       {/* Profile card */}
       <div className="rounded-xl bg-gradient-to-br from-[#1e3a8a] to-[#2563eb] p-card shadow-sm flex items-center gap-4">
         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white text-xl font-bold shrink-0">
-          지
+          {avatarInitial(profileName)}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-white font-bold text-base">김지현</div>
-          <div className="text-white/60 text-xs mt-0.5">
-            {streakCount != null ? `${streakCount}일 연속 기록 중 🔥` : "기록을 시작해보세요"} · Wavely 사용자
-          </div>
-        </div>
-        <button className="shrink-0 bg-white/15 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition-colors">
-          편집
-        </button>
+        {isEditingName ? (
+          <form
+            className="flex-1 min-w-0 flex items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveName();
+            }}
+          >
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              maxLength={MAX_NAME_LENGTH}
+              placeholder="이름을 입력해주세요"
+              aria-label="표시할 이름"
+              className="flex-1 min-w-0 bg-white/15 border border-white/25 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder:text-white/50 outline-none focus:border-white/50"
+            />
+            <button
+              type="submit"
+              className="shrink-0 bg-white/25 hover:bg-white/35 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+            >
+              저장
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditingName(false)}
+              className="shrink-0 text-white/70 hover:text-white text-xs px-2 py-1.5 transition-colors"
+            >
+              취소
+            </button>
+          </form>
+        ) : (
+          <>
+            <div className="flex-1 min-w-0">
+              <div className={cn("font-bold text-base truncate", profileName ? "text-white" : "text-white/60")}>
+                {displayName(profileName)}
+              </div>
+              <div className="text-white/60 text-xs mt-0.5">
+                {streakCount != null ? `${streakCount}일 연속 기록 중 🔥` : "기록을 시작해보세요"} · Wavely 사용자
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setNameDraft(profileName);
+                setIsEditingName(true);
+              }}
+              className="shrink-0 bg-white/15 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+            >
+              편집
+            </button>
+          </>
+        )}
       </div>
 
       {/* Dark mode toggle */}
