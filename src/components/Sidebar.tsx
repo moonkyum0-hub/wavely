@@ -3,6 +3,8 @@ import { LayoutDashboard, ClipboardList, BarChart3, Target, Settings, Sun, Moon,
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/ThemeContext";
+import { useStreakCount } from "@/hooks/useStreakCount";
+import { avatarInitial, displayName, getProfileName } from "@/lib/profile";
 import WavelyLogo from "./WavelyLogo";
 
 const nav = [
@@ -18,6 +20,8 @@ const nav = [
 
 export default function Sidebar() {
   const { theme, toggle } = useTheme();
+  const streakCount = useStreakCount();
+  const profileName = getProfileName();
 
   return (
     <aside className="flex flex-col w-[200px] xl:w-[220px] min-h-screen bg-[#1e3a8a] shrink-0 sticky top-0 h-screen">
@@ -64,11 +68,19 @@ export default function Sidebar() {
       {/* User + dark toggle */}
       <div className="px-4 pt-3 pb-5 border-t border-white/10 flex items-center gap-2.5">
         <Avatar className="w-8 h-8 shrink-0">
-          <AvatarFallback className="bg-blue-500 text-white text-xs font-bold">지</AvatarFallback>
+          <AvatarFallback className="bg-blue-500 text-white text-xs font-bold">
+            {avatarInitial(profileName)}
+          </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="text-white text-[13px] font-semibold leading-tight truncate">김지현</div>
-          <div className="text-white/50 text-[11px] mt-0.5">14일 연속 기록 중 🔥</div>
+          <div className="text-white text-[13px] font-semibold leading-tight truncate">
+            {displayName(profileName)}
+          </div>
+          <div className="text-white/50 text-[11px] mt-0.5">
+            {streakCount != null
+              ? streakCount > 0 ? `${streakCount}일 연속 기록 중 🔥` : "오늘 기록을 남겨보세요"
+              : " "}
+          </div>
         </div>
         <button
           onClick={toggle}

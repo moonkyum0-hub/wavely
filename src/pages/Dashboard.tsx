@@ -11,6 +11,7 @@ import { getRecentRecords, getRecords } from "@/lib/healthService";
 import { getActiveGoals, getTargets } from "@/lib/goalService";
 import { getCognitiveTestsRange } from "@/lib/cognitiveService";
 import { calcMilestones, CATEGORY_LABEL, type Milestone, type MilestoneCategory } from "@/lib/milestones";
+import { greeting, getProfileName } from "@/lib/profile";
 import type { HealthRecord } from "@/lib/models";
 
 /** 인증서 카테고리 표시 순서 — 누구나 먼저 받는 것부터 */
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const [targets, setTargets] = useState({ sleep: 8, exercise: 30, water: 2000 });
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const earnedMilestones = milestones.filter((m) => m.earned);
+  const profileName = getProfileName();
 
   useEffect(() => {
     (async () => {
@@ -243,7 +245,7 @@ export default function Dashboard() {
               <WavelyLogo size={28} />
               <p className="text-white/70 text-xs font-medium">Wavely · 건강의 흐름</p>
             </div>
-            <h1 className="text-page font-bold text-white">안녕하세요, 지현님 👋</h1>
+            <h1 className="text-page font-bold text-white">{greeting(profileName)}</h1>
             <p className="text-white/55 text-xs mt-1">완벽한 하루 대신, 오늘의 파도를 만들어가요</p>
           </div>
           <Button size="sm" className="shrink-0 bg-white/20 hover:bg-white/30 text-white border-0 text-xs">
@@ -269,7 +271,7 @@ export default function Dashboard() {
       {/* ── Desktop header ── */}
       <div className="hidden md:flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-page font-bold text-foreground">안녕하세요, 지현님 👋</h1>
+          <h1 className="text-page font-bold text-foreground">{greeting(profileName)}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             완벽한 하루 대신, 오늘의 파도를 만들어가요
           </p>
