@@ -1,9 +1,11 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import MobileNav from "./MobileNav";
+import { useDailyReminder } from "@/hooks/useDailyReminder";
 
 export default function Layout() {
   const { pathname } = useLocation();
+  useDailyReminder();
 
   return (
     <div className="flex min-h-screen bg-background font-sans">

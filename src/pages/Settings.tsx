@@ -5,6 +5,14 @@ import { useToast } from "@/context/ToastContext";
 import { cn } from "@/lib/utils";
 import { getRecords } from "@/lib/healthService";
 import { PERSONAS, ONBOARDING_PERSONA_KEY, type PersonaId } from "@/lib/goalTemplates";
+import {
+  ensurePermission,
+  getReminderTime,
+  isReminderEnabled,
+  sendReminderNow,
+  setReminderEnabled,
+  setReminderTime,
+} from "@/lib/notificationService";
 import type { HealthRecord } from "@/lib/models";
 
 function toDateStr(d: Date) {
@@ -43,6 +51,33 @@ export default function Settings() {
       return null;
     }
   });
+
+  const [reminderOn, setReminderOn] = useState(() => isReminderEnabled());
+  const [reminderAt, setReminderAt] = useState(() => getReminderTime());
+
+  async function toggleReminder() {
+    const next = !reminderOn;
+    if (next) {
+      const granted = await ensurePermission();
+      if (!granted) {
+        showToast("알림 권한이 없어 리마인더를 켤 수 없어요. 시스템 알림 설정을 확인해주세요.", "error");
+        return;
+      }
+    }
+    setReminderEnabled(next);
+    setReminderOn(next);
+    showToast(next ? `매일 ${reminderAt}에 알려드릴게요.` : "리마인더를 껐어요.", "info");
+  }
+
+  function changeReminderTime(hhmm: string) {
+    setReminderTime(hhmm);
+    setReminderAt(hhmm);
+  }
+
+  async function testReminder() {
+    const sent = await sendReminderNow("오늘의 파도", "리마인더는 이렇게 도착해요.");
+    if (!sent) showToast("알림을 보내지 못했어요. 시스템 알림 권한을 확인해주세요.", "error");
+  }
 
   function selectPersona(id: PersonaId | null) {
     try {
@@ -97,13 +132,6 @@ export default function Settings() {
   };
 
   const menuSections: { title: string; items: MenuItem[] }[] = [
-    {
-      title: "알림",
-      items: [
-        { icon: Bell, label: "일일 리마인더", sub: "매일 오전 8시", action: "toggle" },
-        { icon: Bell, label: "목표 달성 알림", sub: "목표 완료 시 알림", action: "toggle" },
-      ],
-    },
     {
       title: "데이터",
       items: [
@@ -238,6 +266,66 @@ export default function Settings() {
           >
             선택 안 함
           </button>
+        </div>
+      </div>
+
+      {/* Daily reminder */}
+      <div className="rounded-xl border border-border/20 shadow-sm overflow-hidden">
+        <div className={`${isDark ? "bg-black/15" : "bg-gradient-to-r from-[#1e3a8a]/5 to-transparent"} px-card pt-section pb-item border-b border-border/50`}>
+          <h3 className="text-section font-bold text-foreground">일일 리마인더</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">기록하지 않은 날에만 한 번 알려드려요</p>
+        </div>
+        <div className="bg-card px-card py-section space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Bell className={cn("w-4 h-4 shrink-0", reminderOn ? "text-blue-500" : "text-muted-foreground")} />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">
+                  {reminderOn ? `매일 ${reminderAt}` : "꺼짐"}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  이미 기록한 날은 알리지 않아요
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={toggleReminder}
+              aria-label={reminderOn ? "리마인더 끄기" : "리마인더 켜기"}
+              className={cn(
+                "relative w-11 h-6 rounded-full overflow-hidden shrink-0 transition-colors duration-200 focus:outline-none",
+                reminderOn ? "bg-blue-500" : "bg-muted-foreground/30"
+              )}
+            >
+              <span className={cn(
+                "absolute top-0.5 left-0 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-200",
+                reminderOn ? "translate-x-5" : "translate-x-0.5"
+              )} />
+            </button>
+          </div>
+
+          {reminderOn && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-xs text-muted-foreground" htmlFor="reminder-time">알림 시각</label>
+              <input
+                id="reminder-time"
+                type="time"
+                value={reminderAt}
+                onChange={(e) => changeReminderTime(e.target.value)}
+                className="bg-muted/50 border border-border/30 rounded-lg px-2.5 py-1.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring/40"
+              />
+              <button
+                onClick={testReminder}
+                className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:border-muted-foreground/50 transition-colors"
+              >
+                테스트 알림
+              </button>
+            </div>
+          )}
+
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            Wavely가 켜져 있는 동안에만 알림을 보낼 수 있어요. 앱이 완전히 종료된 상태에서는 알림이 오지 않아요.
+            알림이 오지 않는다면 Windows의 방해 금지(집중 지원) 모드가 켜져 있는지도 확인해보세요.
+          </p>
         </div>
       </div>
 
