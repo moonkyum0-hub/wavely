@@ -6,8 +6,10 @@ import {
 import { useChartTheme } from "@/hooks/useChartTheme";
 import EmptyState from "@/components/EmptyState";
 import { StatCardSkeleton, ChartCardSkeleton } from "@/components/Skeleton";
-import { getRecentRecords } from "@/lib/healthService";
+import { getRecentRecords, getRecords } from "@/lib/healthService";
 import { getActiveGoals } from "@/lib/goalService";
+import { getCognitiveTestsRange } from "@/lib/cognitiveService";
+import { calcCorrelations, MIN_SAMPLES, type CorrelationResult } from "@/lib/correlation";
 import type { HealthRecord } from "@/lib/models";
 
 function toDateStr(d: Date) {
@@ -46,6 +48,8 @@ export default function Statistics() {
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [waveGoalTarget, setWaveGoalTarget] = useState(80);
   const [isLoading, setIsLoading] = useState(true);
+  const [correlations, setCorrelations] = useState<CorrelationResult[]>([]);
+  const [pairedDays, setPairedDays] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +62,24 @@ export default function Statistics() {
         // dev browser mode — no Tauri runtime
       } finally {
         setIsLoading(false);
+      }
+    })();
+  }, []);
+
+  // 상관관계는 표본이 많을수록 의미가 있으므로 기간 선택과 무관하게 전체 기록을 본다
+  useEffect(() => {
+    (async () => {
+      try {
+        const to = toDateStr(new Date());
+        const [allRecords, allTests] = await Promise.all([
+          getRecords("2000-01-01", to),
+          getCognitiveTestsRange("2000-01-01", to),
+        ]);
+        const recordDates = new Set(allRecords.map((r) => r.date));
+        setPairedDays(new Set(allTests.map((t) => t.date).filter((d) => recordDates.has(d))).size);
+        setCorrelations(calcCorrelations(allRecords, allTests));
+      } catch {
+        // dev browser mode — no Tauri runtime
       }
     })();
   }, []);
@@ -306,6 +328,47 @@ export default function Statistics() {
                 <span className={`text-xs leading-relaxed ${ct.isDark ? "text-foreground" : "text-slate-700"}`}>{ins.text}</span>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── 건강 기록 ↔ 인지 검사 경향 ── */}
+      <div className="rounded-xl bg-card border border-border/20 shadow-sm overflow-hidden">
+        <div className={`${hdrStrip} px-card pt-section pb-item border-b border-border/50`}>
+          <h3 className="text-section font-bold text-foreground">건강 기록과 인지 검사</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            같은 날 함께 기록된 값끼리 비교한 경향이에요
+          </p>
+        </div>
+
+        {correlations.length === 0 ? (
+          <EmptyState
+            icon="🔗"
+            title="아직 비교할 표본이 부족해요"
+            description={`같은 날 건강 기록과 인지 검사를 모두 남긴 날이 ${MIN_SAMPLES}일 이상 모이면 경향을 보여드려요 (지금 ${pairedDays}일)`}
+            compact
+          />
+        ) : (
+          <div className="px-card py-section space-y-2.5">
+            {correlations.slice(0, 6).map((c) => (
+              <div
+                key={`${c.metric}-${c.testType}`}
+                className={`rounded-lg border p-item ${
+                  c.strength === "none" ? "border-border/30 bg-muted/20" : "border-border/40 bg-muted/30"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs leading-relaxed text-foreground">{c.summary}</p>
+                  <span className="text-[11px] text-muted-foreground shrink-0 tabular-nums">
+                    r={c.r.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground leading-relaxed pt-1">
+              함께 나타났다는 것이 원인이라는 뜻은 아니에요. 표본이 적을수록 우연일 가능성이 커지고,
+              기록하지 않은 다른 요인이 함께 작용했을 수 있어요.
+            </p>
           </div>
         )}
       </div>
