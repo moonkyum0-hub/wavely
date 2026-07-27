@@ -7,9 +7,14 @@ import { useChartTheme } from "@/hooks/useChartTheme";
 import EmptyState from "@/components/EmptyState";
 import { StatCardSkeleton, ChartCardSkeleton } from "@/components/Skeleton";
 import WavelyLogo from "@/components/WavelyLogo";
-import { getRecentRecords } from "@/lib/healthService";
+import { getRecentRecords, getRecords } from "@/lib/healthService";
 import { getActiveGoals, getTargets } from "@/lib/goalService";
+import { getCognitiveTestsRange } from "@/lib/cognitiveService";
+import { calcMilestones, CATEGORY_LABEL, type Milestone, type MilestoneCategory } from "@/lib/milestones";
 import type { HealthRecord } from "@/lib/models";
+
+/** 인증서 카테고리 표시 순서 — 누구나 먼저 받는 것부터 */
+const MILESTONE_ORDER: MilestoneCategory[] = ["firstTime", "cumulative", "streak", "personalBest"];
 
 function toDateStr(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -52,6 +57,8 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>("wave");
   const [targets, setTargets] = useState({ sleep: 8, exercise: 30, water: 2000 });
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const earnedMilestones = milestones.filter((m) => m.earned);
 
   useEffect(() => {
     (async () => {
@@ -72,6 +79,22 @@ export default function Dashboard() {
         setTargets(getTargets(await getActiveGoals()));
       } catch {
         // dev browser mode — no Tauri runtime, keep defaults
+      }
+    })();
+  }, []);
+
+  // 인증서는 누적 365일까지 세므로 최근 21일이 아니라 전체 기록이 필요하다
+  useEffect(() => {
+    (async () => {
+      try {
+        const to = toDateStr(new Date());
+        const [allRecords, allTests] = await Promise.all([
+          getRecords("2000-01-01", to),
+          getCognitiveTestsRange("2000-01-01", to),
+        ]);
+        setMilestones(calcMilestones(allRecords, allTests));
+      } catch {
+        // dev browser mode — no Tauri runtime
       }
     })();
   }, []);
@@ -401,6 +424,79 @@ export default function Dashboard() {
               <>오늘 기록을 남기면 새로운 흐름이 시작돼요.</>
             )}
           </p>
+        </div>
+      </div>
+
+      {/* ── 업그레이드 인증서 ── */}
+      <div className="rounded-xl bg-card border border-border/20 shadow-sm overflow-hidden">
+        <div className={`px-card pt-section pb-item border-b border-border/40 ${
+          ct.isDark ? "bg-black/15" : "bg-gradient-to-r from-[#1e3a8a]/5 to-transparent"
+        }`}>
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h2 className="text-section font-bold text-foreground">업그레이드 인증서</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">기록이 쌓이며 지나온 지점들이에요</p>
+            </div>
+            <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+              {earnedMilestones.length} / {milestones.length}
+            </span>
+          </div>
+        </div>
+        <div className="px-card py-section">
+          {milestones.length === 0 ? (
+            <EmptyState
+              icon="🏅"
+              title="아직 인증서가 없어요"
+              description="첫 기록을 남기면 여기에 하나씩 모여요"
+            />
+          ) : (
+            <div className="space-y-4">
+              {MILESTONE_ORDER.map((category) => {
+                const group = milestones.filter((m) => m.category === category);
+                if (group.length === 0) return null;
+                return (
+                  <div key={category}>
+                    <p className="text-label font-semibold uppercase text-muted-foreground mb-2">
+                      {CATEGORY_LABEL[category]}
+                    </p>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-item">
+                      {group.map((m) => (
+                        <div
+                          key={m.id}
+                          title={m.description}
+                          className={`rounded-xl border p-3 transition-colors ${
+                            m.earned
+                              ? ct.isDark
+                                ? "border-teal-700/40 bg-teal-900/20"
+                                : "border-emerald-200 bg-emerald-50/70"
+                              : "border-border/40 bg-muted/25"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-base leading-none">{m.earned ? "🏅" : "🤍"}</span>
+                            <span className={`text-xs font-semibold ${m.earned ? "text-foreground" : "text-muted-foreground"}`}>
+                              {m.title}
+                            </span>
+                          </div>
+                          {m.earned ? (
+                            <p className="text-[11px] text-muted-foreground">
+                              {m.detail ?? (m.earnedDate ? `${m.earnedDate} 달성` : "달성")}
+                            </p>
+                          ) : m.progress ? (
+                            <p className="text-[11px] text-muted-foreground tabular-nums">
+                              {m.progress.current} / {m.progress.target}
+                            </p>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground">아직이에요</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
