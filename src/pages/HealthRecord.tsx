@@ -2,11 +2,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Zap, Star, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Zap, Star, ChevronRight, CheckCircle2, Pencil, Trash2, CalendarDays } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { useToast } from "@/context/ToastContext";
 import EmptyState from "@/components/EmptyState";
 import { LogItemSkeleton } from "@/components/Skeleton";
-import { upsertRecord, getRecord, getRecords, getRecentRecords } from "@/lib/healthService";
+import { upsertRecord, getRecord, getRecords, getRecentRecords, deleteRecord } from "@/lib/healthService";
 import { calcWaveScore, type HealthRecord as HealthRecordModel } from "@/lib/models";
 import { getActiveGoals, getTargets } from "@/lib/goalService";
 
@@ -75,6 +76,11 @@ export default function HealthRecord() {
   const [isReturning, setIsReturning] = useState(false);
   const [recentLogs,  setRecentLogs]  = useState<HealthRecordModel[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  /** 지금 폼이 편집 중인 날짜. 기본은 오늘이지만 지난 기록을 불러와 고칠 수 있다. */
+  const [editingDate, setEditingDate] = useState(today);
+  const [pendingDelete, setPendingDelete] = useState<HealthRecordModel | null>(null);
+  const { show: showToast } = useToast();
+  const isEditingToday = editingDate === today;
 
   const loadRecent = useCallback(async () => {
     try {
@@ -87,11 +93,19 @@ export default function HealthRecord() {
     }
   }, []);
 
-  // Pre-fill today's record if it exists
+  // 편집 대상 날짜의 기록을 폼에 채운다. 날짜를 바꾸면 이전 값이 남지 않도록 항상 먼저 비운다.
   useEffect(() => {
     (async () => {
+      setCondition(3);
+      setSleep("");
+      setExercise("");
+      setWater("");
+      setNote("");
+      setSavedScore(null);
+      setJustSaved(false);
+      setIsReturning(false);
       try {
-        const rec = await getRecord(today);
+        const rec = await getRecord(editingDate);
         if (rec) {
           if (rec.condition)   setCondition(rec.condition);
           if (rec.sleepHours)  setSleep(String(rec.sleepHours));
@@ -106,14 +120,29 @@ export default function HealthRecord() {
     // so the sync-setState-in-effect concern doesn't apply here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadRecent();
-  }, [today, loadRecent]);
+  }, [editingDate, loadRecent]);
+
+  async function handleDelete() {
+    if (!pendingDelete?.id) return;
+    const target = pendingDelete;
+    setPendingDelete(null);
+    try {
+      await deleteRecord(target.id!);
+      // 지금 편집 중이던 기록을 지웠다면 폼을 오늘로 되돌린다
+      if (target.date === editingDate) setEditingDate(today);
+      await loadRecent();
+      showToast(`${target.date} 기록을 지웠어요.`, "info");
+    } catch {
+      // dbExecute가 이미 토스트로 알려준다
+    }
+  }
 
   async function handleSave() {
     if (hasErrors) return;
     setIsSaving(true);
     try {
       const record: HealthRecordModel = {
-        date:        today,
+        date:        editingDate,
         condition,
         sleepHours:  sleep    ? parseFloat(sleep)    : undefined,
         exerciseMin: exercise ? parseInt(exercise)   : undefined,
@@ -128,14 +157,17 @@ export default function HealthRecord() {
 
       // 복귀 환영 UX — 어제 기록이 비어있는데 그 이전엔 기록이 있었다면 "공백 후 복귀"로 판단해
       // 저장 배너를 축하/환영 톤으로 바꾼다. 리셋이나 처벌 연출 없이, 돌아온 것 자체를 반긴다.
-      try {
-        const yesterday = toDateStr(new Date(Date.now() - 86400000));
-        const windowStart = toDateStr(new Date(Date.now() - 30 * 86400000));
-        const priorWindow = await getRecords(windowStart, yesterday);
-        const hadYesterday = priorWindow.some((r) => r.date === yesterday);
-        setIsReturning(!hadYesterday && priorWindow.length > 0);
-      } catch {
-        setIsReturning(false);
+      // 지난 기록을 고치는 중이라면 "돌아왔다"는 서사가 맞지 않으므로 오늘 저장할 때만 판단한다.
+      if (isEditingToday) {
+        try {
+          const yesterday = toDateStr(new Date(Date.now() - 86400000));
+          const windowStart = toDateStr(new Date(Date.now() - 30 * 86400000));
+          const priorWindow = await getRecords(windowStart, yesterday);
+          const hadYesterday = priorWindow.some((r) => r.date === yesterday);
+          setIsReturning(!hadYesterday && priorWindow.length > 0);
+        } catch {
+          setIsReturning(false);
+        }
       }
 
       await loadRecent();
@@ -181,10 +213,29 @@ export default function HealthRecord() {
           "px-card pt-section pb-item border-b border-border/50",
           isDark ? "bg-black/15" : "bg-gradient-to-r from-teal-50/80 to-transparent"
         )}>
-          <h3 className="text-section font-bold text-foreground">오늘 건강 체크</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {today} · {tab === "quick" ? "컨디션 + 3가지 핵심 지표" : "상세 기록 모드"}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-section font-bold text-foreground">
+                {isEditingToday ? "오늘 건강 체크" : "지난 기록 고치기"}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {editingDate} · {tab === "quick" ? "컨디션 + 3가지 핵심 지표" : "상세 기록 모드"}
+              </p>
+            </div>
+            {!isEditingToday && (
+              <button
+                onClick={() => setEditingDate(today)}
+                className={cn(
+                  "shrink-0 flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors",
+                  isDark
+                    ? "border-border text-blue-300 hover:border-blue-500/50"
+                    : "border-border text-blue-600 hover:border-blue-400"
+                )}
+              >
+                <CalendarDays className="w-3.5 h-3.5" /> 오늘로
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="bg-card px-card py-card space-y-6">
@@ -341,21 +392,57 @@ export default function HealthRecord() {
             <div className="divide-y divide-border/50">
               {recentLogs.map((log) => {
                 const score = log.waveScore;
+                const isBeingEdited = log.date === editingDate;
                 return (
-                  <div key={log.id} className="flex items-center gap-3 px-card py-item">
+                  <div
+                    key={log.id}
+                    className={cn(
+                      "flex items-center gap-3 px-card py-item",
+                      isBeingEdited && (isDark ? "bg-blue-900/15" : "bg-blue-50/60")
+                    )}
+                  >
                     <span className="text-lg shrink-0">{score != null ? waveEmoji(score) : "–"}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-xs font-semibold text-foreground">{log.date}</span>
                         <span className={cn("text-[11px] font-bold", isDark ? "text-blue-400" : "text-blue-500")}>
                           {score != null ? `${score}점` : "–"}
                         </span>
+                        {isBeingEdited && (
+                          <span className={cn(
+                            "text-[10px] px-1.5 py-0.5 rounded-full",
+                            isDark ? "bg-blue-500/20 text-blue-300" : "bg-blue-100 text-blue-700"
+                          )}>
+                            고치는 중
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-1.5 flex-wrap">
                         {scoreTags(log).map((t) => (
                           <span key={t} className="text-[10px] bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{t}</span>
                         ))}
                       </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => setEditingDate(log.date)}
+                        aria-label={`${log.date} 기록 수정`}
+                        title="수정"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setPendingDelete(log)}
+                        aria-label={`${log.date} 기록 삭제`}
+                        title="삭제"
+                        className={cn(
+                          "p-1.5 rounded-lg transition-colors hover:bg-muted",
+                          isDark ? "text-muted-foreground hover:text-rose-400" : "text-muted-foreground hover:text-rose-600"
+                        )}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 );
@@ -375,6 +462,46 @@ export default function HealthRecord() {
           흐름 보기 →
         </button>
       </div>
+
+      {/* 삭제 확인 — 되돌릴 수 없는 동작이라 한 번 더 묻는다 */}
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setPendingDelete(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-title"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-xl bg-card border border-border/30 shadow-lg p-card"
+          >
+            <h3 id="delete-title" className="text-section font-bold text-foreground">
+              {pendingDelete.date} 기록을 지울까요?
+            </h3>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+              이 날의 컨디션·수면·운동·수분 기록이 모두 사라져요. 되돌릴 수 없어요.
+            </p>
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="flex-1 h-10 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                그대로 둘게요
+              </button>
+              <button
+                onClick={handleDelete}
+                className={cn(
+                  "flex-1 h-10 rounded-lg text-sm font-semibold text-white transition-colors",
+                  isDark ? "bg-rose-600 hover:bg-rose-500" : "bg-rose-600 hover:bg-rose-700"
+                )}
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
