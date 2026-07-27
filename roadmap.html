@@ -496,9 +496,12 @@
     let changed = false;
     const fullyDone = { p0: 'all', p1: 'all', p2: 'all' };
     const partiallyDone = {
-      p3: [0, 1, 3, 4, 6, 7, 8], // not done: 2 (기록 수정/삭제 플로우), 5 (프로필 실데이터)
-      p4: [0, 1, 2, 3, 5],       // not done: 4 (네이티브 알림), 6 (상관관계 분석), 7 (업그레이드 인증서), 8 (복지 시뮬레이터)
+      p3: [0, 1, 2, 3, 4, 6, 7, 8],    // not done: 5 (프로필 실데이터 — 이름/아바타가 아직 하드코딩)
+      p4: [0, 1, 2, 3, 4, 5, 6, 7],    // not done: 8 (복지 효과 시뮬레이터 — 아래 참고)
     };
+    // 복지 효과 시뮬레이터(p4-8)는 2026-07-26 논의에서 보류하기로 했다.
+    // "지속하면 좋아집니다" 류의 예측은 효능 주장이 되어 Lumosity FTC 사례와 같은 문제가 되고,
+    // 정직하게 만들 방법(내 기록의 단순 산술 연장 등)이 더 분명해진 뒤에 다시 꺼낸다.
     Object.keys(fullyDone).forEach(phaseId => {
       const ph = phases.find(p => p.id === phaseId);
       if (!ph) return;
